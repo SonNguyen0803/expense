@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, OnDestroy } from '@angular/core';
+import { Component, OnInit, signal, computed, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { EChartsOption } from 'echarts';
@@ -404,6 +404,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.currentFamily = this.familyRepo.selectedFamily;
     this.user = this.authService.user;
     this.transactions = this.transactionRepo.allTransactions;
+
+    effect(() => {
+      const family = this.currentFamily();
+      if (family?.id) {
+        this.transactionRepo.loadTransactions(family.id);
+      }
+    });
   }
 
   async ngOnInit() {

@@ -27,7 +27,6 @@ export class TransactionRepository {
 
   async loadTransactions(familyId: string, filters?: TransactionFilters) {
     this.loading.set(true);
-
     try {
       let query = (this.supabase.db as any)
         .from('transactions')
