@@ -14,26 +14,26 @@ import {
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="p-4 md:p-6 lg:p-8">
-      <div class="flex items-center justify-between mb-6">
+    <div class="p-3 md:p-6 lg:p-8">
+      <div class="flex items-center justify-between mb-2">
         <h1 class="text-2xl md:text-3xl font-bold">Giao dịch</h1>
-        <div class="flex items-center gap-2">
-          <button (click)="prevMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-            ←
-          </button>
-          <span class="font-semibold">{{ formatMonthYear(currentMonth()) }}</span>
-          <button (click)="nextMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-            →
-          </button>
-        </div>
         <button routerLink="/transactions/new" class="btn btn-primary">
           ➕ Thêm giao dịch
         </button>
       </div>
+      <div class="flex justify-around items-center gap-2">
+          <button (click)="prevMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+            ← Prev
+          </button>
+          <span class="font-semibold">{{ formatMonthYear(currentMonth()) }}</span>
+          <button (click)="nextMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+            Next →
+          </button>
+        </div>
 
       @if (filteredTransactions().length > 0) {
         <div class="card">
-          <div class="p-4 mb-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div class="p-2 mb-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div class="flex justify-around">
               <div class="text-center">
                 <p class="text-sm text-gray-500 dark:text-gray-400">Tổng thu</p>
@@ -50,9 +50,9 @@ import {
             </div>
           </div>
 
-          <div class="space-y-3">
+          <div class="space-y-1">
             @for (transaction of filteredTransactions(); track transaction.id) {
-              <div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors" (click)="editTransaction(transaction.id)">
+              <div class="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors" (click)="editTransaction(transaction.id)">
                 <div class="flex items-center gap-3">
                   <div class="text-2xl">{{ transaction.category?.icon }}</div>
                   <div>
@@ -67,6 +67,7 @@ import {
                   </p>
                 </div>
               </div>
+              <hr>
             }
           </div>
         </div>
@@ -89,7 +90,7 @@ export class TransactionListComponent implements OnInit {
   constructor(
     private familyRepo: FamilyRepository,
     private transactionRepo: TransactionRepository,
-    private router : Router
+    private router: Router
   ) {
     this.currentFamily = this.familyRepo.selectedFamily;
     this.transactions = this.transactionRepo.allTransactions;
