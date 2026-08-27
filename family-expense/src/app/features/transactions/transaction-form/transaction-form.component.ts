@@ -85,6 +85,16 @@ import { AuthService } from '../../../core/auth/auth.service';
               >
                 Hủy
               </button>
+              @if (isEditMode()) {
+                <button
+                  type="button"
+                  (click)="deleteTransaction()"
+                  class="btn bg-red-600 hover:bg-red-700 text-white"
+                  [disabled]="loading()"
+                >
+                  Xóa
+                </button>
+              }
               <button
                 type="submit"
                 class="btn btn-primary flex-1"
@@ -151,10 +161,38 @@ export class TransactionFormComponent implements OnInit {
       }
     }
 
+    // Check if we're in edit mode
     this.transactionId = this.route.snapshot.paramMap.get('id');
     if (this.transactionId) {
       this.isEditMode.set(true);
-      // TODO: Load transaction data for edit mode
+      await this.loadTransaction(this.transactionId);
+    }
+  }
+
+  async loadTransaction(id: string) {
+    try {
+      this.loading.set(true);
+      const transaction = await this.transactionRepo.getTransactionById(id);
+      
+      if (transaction) {
+        this.transactionForm.patchValue({
+          type: transaction.type,
+          amount: transaction.amount,
+          category_id: transaction.category_id,
+          member_id: transaction.member_id,
+          transaction_date: transaction.transaction_date,
+          note: transaction.note || ''
+        });
+        
+        // Update filtered categories based on loaded type
+        this.updateFilteredCategories(transaction.type);
+      }
+    } catch (error) {
+      console.error('Error loading transaction:', error);
+      alert('Không thể tải thông tin giao dịch');
+      this.router.navigate(['/transactions']);
+    } finally {
+      this.loading.set(false);
     }
   }
 
@@ -176,21 +214,52 @@ export class TransactionFormComponent implements OnInit {
 
       const formValue = this.transactionForm.value;
       
-      await this.transactionRepo.createTransaction({
-        family_id: family.id,
-        category_id: formValue.category_id,
-        member_id: formValue.member_id,
-        type: formValue.type,
-        amount: formValue.amount.toString(),
-        note: formValue.note,
-        transaction_date: formValue.transaction_date,
-        created_by: user.id
-      });
+      if (this.isEditMode() && this.transactionId) {
+        // Update existing transaction
+        await this.transactionRepo.updateTransaction(this.transactionId, {
+          category_id: formValue.category_id,
+          member_id: formValue.member_id,
+          type: formValue.type,
+          amount: formValue.amount.toString(),
+          note: formValue.note,
+          transaction_date: formValue.transaction_date
+        });
+      } else {
+        // Create new transaction
+        await this.transactionRepo.createTransaction({
+          family_id: family.id,
+          category_id: formValue.category_id,
+          member_id: formValue.member_id,
+          type: formValue.type,
+          amount: formValue.amount.toString(),
+          note: formValue.note,
+          transaction_date: formValue.transaction_date,
+          created_by: user.id
+        });
+      }
 
       this.router.navigate(['/transactions']);
     } catch (error) {
       console.error('Error saving transaction:', error);
       alert('Đã xảy ra lỗi khi lưu giao dịch');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async deleteTransaction() {
+    if (!this.transactionId) return;
+    
+    const confirmed = confirm('Bạn có chắc chắn muốn xóa giao dịch này?');
+    if (!confirmed) return;
+
+    try {
+      this.loading.set(true);
+      await this.transactionRepo.deleteTransaction(this.transactionId);
+      this.router.navigate(['/transactions']);
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      alert('Đã xảy ra lỗi khi xóa giao dịch');
     } finally {
       this.loading.set(false);
     }

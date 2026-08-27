@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FamilyRepository } from '../../../core/services/family.repository';
 import { TransactionRepository } from '../../../core/services/transaction.repository';
 import {
@@ -52,7 +52,7 @@ import {
 
           <div class="space-y-3">
             @for (transaction of filteredTransactions(); track transaction.id) {
-              <div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
+              <div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors" (click)="editTransaction(transaction.id)">
                 <div class="flex items-center gap-3">
                   <div class="text-2xl">{{ transaction.category?.icon }}</div>
                   <div>
@@ -88,7 +88,8 @@ export class TransactionListComponent implements OnInit {
 
   constructor(
     private familyRepo: FamilyRepository,
-    private transactionRepo: TransactionRepository
+    private transactionRepo: TransactionRepository,
+    private router : Router
   ) {
     this.currentFamily = this.familyRepo.selectedFamily;
     this.transactions = this.transactionRepo.allTransactions;
@@ -155,5 +156,9 @@ export class TransactionListComponent implements OnInit {
 
   formatMonthYear(date: Date): string {
     return formatMonthYear(date);
+  }
+
+  editTransaction(transactionId: string) {
+    this.router.navigate(['/transactions', transactionId, 'edit']);
   }
 }

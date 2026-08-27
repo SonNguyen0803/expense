@@ -112,6 +112,26 @@ export class TransactionRepository {
     }
   }
 
+  async getTransactionById(id: string) {
+    try {
+      const { data, error } = await (this.supabase.db as any)
+        .from('transactions')
+        .select(`
+          *,
+          category:categories(*),
+          member:family_members(*)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error getting transaction:', error);
+      throw error;
+    }
+  }
+
   async updateTransaction(id: string, updates: any) {
     try {
       const { data, error } = await (this.supabase.db as any)
