@@ -7,6 +7,14 @@ import { TransactionRepository } from '../../core/services/transaction.repositor
 import { CategoryRepository } from '../../core/services/category.repository';
 import { AuthService } from '../../core/auth/auth.service';
 import { NgxEchartsModule, NgxEchartsDirective } from 'ngx-echarts';
+import { 
+  getStartOfMonth, 
+  getEndOfMonth, 
+  addMonths, 
+  formatDateYYYYMMDD,
+  formatMonthYear,
+  filterTransactionsByMonth
+} from '../../core/utils/date.util';
 
 @Component({
   selector: 'app-dashboard',
@@ -28,12 +36,24 @@ import { NgxEchartsModule, NgxEchartsDirective } from 'ngx-echarts';
         <!-- Welcome header -->
         <div class="mb-8">
           <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-
             Xin chào, {{ user()?.email?.split('@')?.[0] || 'User' }} 👋
           </h1>
           <p class="text-gray-600 dark:text-gray-400 mt-1">
-            {{ currentMonth() }}
+            {{ formatMonthYear(currentMonth()) }}
           </p>
+        </div>
+
+        <!-- Month Navigation -->
+        <div class="card mb-6 flex items-center justify-between p-4">
+          <button (click)="prevMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+            ← Prev
+          </button>
+          <div class="text-center">
+            <h3 class="font-bold text-lg">{{ formatMonthYear(currentMonth()) }}</h3>
+          </div>
+          <button (click)="nextMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+            Next →
+          </button>
         </div>
 
         <!-- Stats cards -->
@@ -139,7 +159,6 @@ import { NgxEchartsModule, NgxEchartsDirective } from 'ngx-echarts';
                   </div>
                   <div [class]="transaction.type === 'INCOME' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
                     <p class="font-bold">
-
                       {{ transaction.type === 'INCOME' ? '+' : '-' }}{{ formatCurrency(+transaction.amount) }}
                     </p>
                   </div>
@@ -173,9 +192,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentFamily;
   user;
   transactions;
+  currentMonth = signal(new Date());
 
   stats = computed(() => {
-    const trans = this.transactions();
+    const trans = this.filteredTransactions();
     const totalIncome = trans
       .filter(t => t.type === 'INCOME')
       .reduce((sum, t) => sum + parseFloat(t.amount), 0);
@@ -191,11 +211,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
   });
 
   recentTransactions = computed(() => {
-    return this.transactions().slice(0, 5);
+    return this.filteredTransactions().slice(0, 5);
+  });
+
+  filteredTransactions = computed(() => {
+    const trans = this.transactions();
+    const month = this.currentMonth();
+    return filterTransactionsByMonth(
+      trans, 
+      month.getFullYear(), 
+      month.getMonth()
+    );
   });
 
   categoryChartOption = computed<EChartsOption>(() => {
-    const trans = this.transactions()
+    const trans = this.filteredTransactions()
       .filter(t => t.type === 'EXPENSE');
 
     if (trans.length === 0) {
@@ -296,7 +326,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   });
 
   trendChartOption = computed<EChartsOption>(() => {
-    const trans = this.transactions();
+    const trans = this.filteredTransactions();
 
     if (trans.length === 0) {
       return {
@@ -390,10 +420,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ]
     };
   });
-  currentMonth = computed(() => {
-    const now = new Date();
-    return `Tháng ${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
-  });
 
   constructor(
     private familyRepo: FamilyRepository,
@@ -424,6 +450,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.transactionRepo.unsubscribeFromTransactions();
   }
 
+  prevMonth() {
+    this.currentMonth.set(addMonths(this.currentMonth(), -1));
+  }
+
+  nextMonth() {
+    this.currentMonth.set(addMonths(this.currentMonth(), 1));
+  }
+
   private async loadData(familyId: string) {
     try {
       await this.categoryRepo.loadCategories(familyId);
@@ -448,5 +482,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('vi-VN').format(date);
+  }
+
+  formatMonthYear(date: Date): string {
+    return formatMonthYear(date);
   }
 }
