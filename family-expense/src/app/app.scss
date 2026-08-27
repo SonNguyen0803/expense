@@ -1,0 +1,23 @@
+.nav-item {
+  @apply flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors cursor-pointer;
+}
+
+.nav-item.active {
+  @apply bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium;
+}
+
+.bottom-nav-item {
+  @apply flex flex-col items-center gap-1 px-4 py-2 text-gray-600 dark:text-gray-400 min-w-[60px];
+}
+
+.bottom-nav-item.active {
+  @apply text-primary-600 dark:text-primary-400;
+}
+
+.bottom-nav-item-add {
+  @apply flex items-center justify-center w-14 h-14 -mt-6 bg-primary-600 text-white rounded-full shadow-lg;
+}
+
+.nav-link{
+  cursor: pointer;
+}
