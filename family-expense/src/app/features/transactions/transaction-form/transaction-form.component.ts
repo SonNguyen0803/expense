@@ -214,13 +214,14 @@ export class TransactionFormComponent implements OnInit {
 
       const formValue = this.transactionForm.value;
       
+      const am = formValue.amount * 1000; // Convert to the expected format
       if (this.isEditMode() && this.transactionId) {
         // Update existing transaction
         await this.transactionRepo.updateTransaction(this.transactionId, {
           category_id: formValue.category_id,
           member_id: formValue.member_id,
           type: formValue.type,
-          amount: formValue.amount.toString(),
+          amount: am.toString(),
           note: formValue.note,
           transaction_date: formValue.transaction_date
         });
@@ -231,7 +232,7 @@ export class TransactionFormComponent implements OnInit {
           category_id: formValue.category_id,
           member_id: formValue.member_id,
           type: formValue.type,
-          amount: formValue.amount.toString(),
+          amount: am.toString(),
           note: formValue.note,
           transaction_date: formValue.transaction_date,
           created_by: user.id
