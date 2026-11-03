@@ -1,0 +1,1302 @@
+<div class="p-3 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+
+  <!-- ========================================== -->
+  <!-- Top Header & Child Selector                -->
+  <!-- ========================================== -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-2">
+        <span>⭐</span>
+        <span>Nhiệm vụ & Điểm thưởng cho bé</span>
+      </h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Rèn luyện thói quen tự lập, việc nhà, học tập và đổi quà khích lệ cho con
+      </p>
+    </div>
+
+    <!-- Children Selector Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1">
+      @for (child of children(); track child.id) {
+        <button
+          type="button"
+          (click)="selectChild(child)"
+          class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all shadow-sm border"
+          [class.bg-primary-600]="selectedChild()?.id === child.id"
+          [class.text-white]="selectedChild()?.id === child.id"
+          [class.border-primary-600]="selectedChild()?.id === child.id"
+          [class.bg-white]="selectedChild()?.id !== child.id"
+          [class.dark:bg-gray-800]="selectedChild()?.id !== child.id"
+          [class.text-gray-700]="selectedChild()?.id !== child.id"
+          [class.dark:text-gray-200]="selectedChild()?.id !== child.id"
+          [class.border-gray-200]="selectedChild()?.id !== child.id"
+          [class.dark:border-gray-700]="selectedChild()?.id !== child.id"
+        >
+          <span class="text-lg">{{ child.gender === 'BOY' ? '👦' : '👧' }}</span>
+          <span>{{ child.name }}</span>
+          <span class="text-xs px-1.5 py-0.5 rounded-full font-bold"
+            [class.bg-primary-700]="selectedChild()?.id === child.id"
+            [class.text-yellow-300]="selectedChild()?.id === child.id"
+            [class.bg-yellow-100]="selectedChild()?.id !== child.id"
+            [class.text-yellow-800]="selectedChild()?.id !== child.id"
+          >
+            {{ taskRepo.getChildPoints(child.id).balance }}⭐
+          </span>
+        </button>
+      }
+
+      @if (children().length === 0) {
+        <a
+          routerLink="/children"
+          class="flex items-center gap-1.5 px-3 py-2 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-xl text-sm font-medium border border-dashed border-primary-300"
+        >
+          <span>➕</span>
+          <span>Thêm hồ sơ bé trước</span>
+        </a>
+      }
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- Child Summary Banner                       -->
+  <!-- ========================================== -->
+  @if (selectedChild()) {
+    <div class="card bg-gradient-to-r from-yellow-50 via-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-800/90 border border-amber-200 dark:border-gray-700 !p-5">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <!-- Avatar & Level -->
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-3xl shadow-md">
+            {{ selectedChild()?.gender === 'BOY' ? '👦' : '👧' }}
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-xl font-bold">{{ selectedChild()?.name }}</h2>
+              <span class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-500 text-white">
+                {{ activeChildLevel().title }}
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">
+              Đã tích lũy: <strong class="text-amber-700 dark:text-amber-400 font-bold">{{ activeChildPoints().earned }} điểm</strong>
+              • Cần thêm {{ activeChildLevel().nextLevelPoints - activeChildPoints().earned > 0 ? activeChildLevel().nextLevelPoints - activeChildPoints().earned : 0 }} điểm để thăng cấp tiếp theo!
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick Balance Card & Actions -->
+        <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+          <div class="px-5 py-2.5 bg-white dark:bg-gray-700 rounded-2xl shadow-sm border border-amber-200 dark:border-gray-600 text-center">
+            <span class="text-xs text-gray-500 block">Số điểm khả dụng</span>
+            <span class="text-2xl font-black text-amber-500 flex items-center justify-center gap-1">
+              <span>⭐</span>
+              <span>{{ activeChildPoints().balance }}</span>
+            </span>
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              (click)="openAdjustPointsModal('BONUS')"
+              class="btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 px-3 rounded-xl flex items-center gap-1 shadow-sm"
+              title="Thưởng nóng điểm cho con"
+            >
+              <span>⭐</span>
+              <span>Thưởng nóng</span>
+            </button>
+            <button
+              (click)="openAdjustPointsModal('PENALTY')"
+              class="btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-300 text-xs py-2 px-3 rounded-xl flex items-center gap-1"
+              title="Trừ điểm vi phạm"
+            >
+              <span>⚠️</span>
+              <span>Trừ điểm</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- Navigation Tabs                            -->
+  <!-- ========================================== -->
+  <div class="border-b border-gray-200 dark:border-gray-700">
+    <nav class="flex gap-2 md:gap-6 overflow-x-auto">
+      <button
+        type="button"
+        (click)="activeTab.set('TASKS')"
+        class="py-3 px-2 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2"
+        [class.border-primary-600]="activeTab() === 'TASKS'"
+        [class.text-primary-600]="activeTab() === 'TASKS'"
+        [class.border-transparent]="activeTab() !== 'TASKS'"
+        [class.text-gray-500]="activeTab() !== 'TASKS'"
+      >
+        <span>📋</span>
+        <span>Nhiệm vụ</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+          {{ tasks().length }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        (click)="activeTab.set('APPROVALS')"
+        class="py-3 px-2 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2 relative"
+        [class.border-primary-600]="activeTab() === 'APPROVALS'"
+        [class.text-primary-600]="activeTab() === 'APPROVALS'"
+        [class.border-transparent]="activeTab() !== 'APPROVALS'"
+        [class.text-gray-500]="activeTab() !== 'APPROVALS'"
+      >
+        <span>⏳</span>
+        <span>Chờ duyệt</span>
+        @if (pendingSubmissions().length + pendingRedemptions().length > 0) {
+          <span class="text-xs px-2 py-0.5 rounded-full bg-rose-500 text-white font-bold animate-pulse">
+            {{ pendingSubmissions().length + pendingRedemptions().length }}
+          </span>
+        }
+      </button>
+
+      <button
+        type="button"
+        (click)="activeTab.set('REWARDS')"
+        class="py-3 px-2 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2"
+        [class.border-primary-600]="activeTab() === 'REWARDS'"
+        [class.text-primary-600]="activeTab() === 'REWARDS'"
+        [class.border-transparent]="activeTab() !== 'REWARDS'"
+        [class.text-gray-500]="activeTab() !== 'REWARDS'"
+      >
+        <span>🎁</span>
+        <span>Đổi thưởng</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+          {{ rewards().length }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        (click)="activeTab.set('POINTS')"
+        class="py-3 px-2 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2"
+        [class.border-primary-600]="activeTab() === 'POINTS'"
+        [class.text-primary-600]="activeTab() === 'POINTS'"
+        [class.border-transparent]="activeTab() !== 'POINTS'"
+        [class.text-gray-500]="activeTab() !== 'POINTS'"
+      >
+        <span>💰</span>
+        <span>Điểm & Lịch sử</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="activeTab.set('RANKING')"
+        class="py-3 px-2 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2"
+        [class.border-primary-600]="activeTab() === 'RANKING'"
+        [class.text-primary-600]="activeTab() === 'RANKING'"
+        [class.border-transparent]="activeTab() !== 'RANKING'"
+        [class.text-gray-500]="activeTab() !== 'RANKING'"
+      >
+        <span>🏆</span>
+        <span>Thành tích & Bảng xếp hạng</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="activeTab.set('CATEGORIES')"
+        class="py-3 px-2 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2"
+        [class.border-primary-600]="activeTab() === 'CATEGORIES'"
+        [class.text-primary-600]="activeTab() === 'CATEGORIES'"
+        [class.border-transparent]="activeTab() !== 'CATEGORIES'"
+        [class.text-gray-500]="activeTab() !== 'CATEGORIES'"
+      >
+        <span>📑</span>
+        <span>Danh mục</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 1: Nhiệm vụ (Task Management)          -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'TASKS') {
+    <div class="space-y-4">
+      <!-- Controls Toolbar -->
+      <div class="card !p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <!-- Filter Pills & Today Switcher -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- View mode -->
+          <div class="inline-flex rounded-lg bg-gray-100 dark:bg-gray-700 p-1">
+            <button
+              type="button"
+              (click)="taskViewMode.set('TODAY')"
+              class="px-3 py-1 rounded-md text-xs font-semibold transition-colors"
+              [class.bg-white]="taskViewMode() === 'TODAY'"
+              [class.dark:bg-gray-800]="taskViewMode() === 'TODAY'"
+              [class.shadow-sm]="taskViewMode() === 'TODAY'"
+              [class.text-primary-600]="taskViewMode() === 'TODAY'"
+            >
+              📅 Hôm nay
+            </button>
+            <button
+              type="button"
+              (click)="taskViewMode.set('ALL')"
+              class="px-3 py-1 rounded-md text-xs font-semibold transition-colors"
+              [class.bg-white]="taskViewMode() === 'ALL'"
+              [class.dark:bg-gray-800]="taskViewMode() === 'ALL'"
+              [class.shadow-sm]="taskViewMode() === 'ALL'"
+              [class.text-primary-600]="taskViewMode() === 'ALL'"
+            >
+              📋 Tất cả
+            </button>
+          </div>
+
+          <!-- Category filter -->
+          <select
+            [ngModel]="filterCategory()"
+            (ngModelChange)="filterCategory.set($event)"
+            class="input !w-auto !py-1 !px-2.5 text-xs rounded-lg"
+          >
+            <option value="ALL">Tất cả danh mục</option>
+            @for (cat of categories(); track cat.id) {
+              <option [value]="cat.id">{{ cat.icon }} {{ cat.name }}</option>
+            }
+          </select>
+        </div>
+
+        <button (click)="openAddTaskModal()" class="btn btn-primary text-xs flex items-center justify-center gap-1.5 whitespace-nowrap">
+          <span>➕</span>
+          <span>Giao nhiệm vụ mới</span>
+        </button>
+      </div>
+
+      <!-- Task Cards Grid -->
+      @if (filteredTasks().length > 0) {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (task of filteredTasks(); track task.id) {
+            <div
+              class="card !p-4 flex flex-col justify-between border hover:shadow-md transition-all relative overflow-hidden"
+              [class.border-emerald-300]="completedTasksTodayIds().has(task.id)"
+              [class.bg-emerald-50/20]="completedTasksTodayIds().has(task.id)"
+              [class.border-gray-200]="!completedTasksTodayIds().has(task.id)"
+              [class.dark:border-gray-700]="!completedTasksTodayIds().has(task.id)"
+            >
+              <div>
+                <!-- Card Header -->
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <span class="text-xs px-2.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1"
+                    [style.background-color]="(task.category?.color || '#3B82F6') + '20'"
+                    [style.color]="task.category?.color || '#3B82F6'"
+                  >
+                    <span>{{ task.category?.icon || '📝' }}</span>
+                    <span>{{ task.category?.name || 'Chung' }}</span>
+                  </span>
+
+                  <!-- Points Badge -->
+                  <span class="text-xs font-black px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 inline-flex items-center gap-1">
+                    <span>+{{ task.points }}</span>
+                    <span>⭐</span>
+                  </span>
+                </div>
+
+                <!-- Title & Description -->
+                <h3 class="font-bold text-base text-gray-900 dark:text-white"
+                  [class.line-through]="completedTasksTodayIds().has(task.id)"
+                  [class.text-gray-500]="completedTasksTodayIds().has(task.id)"
+                >
+                  {{ task.title }}
+                </h3>
+
+                @if (task.description) {
+                  <p class="text-xs text-gray-500 mt-1 line-clamp-2">
+                    {{ task.description }}
+                  </p>
+                }
+
+                <!-- Schedule & Target Info -->
+                <div class="flex flex-wrap items-center gap-2 mt-3 text-[11px] text-gray-400">
+                  <span class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
+                    ⏰ {{ scheduleLabels[task.schedule_type] || task.schedule_type }}
+                  </span>
+                  @if (task.child_id) {
+                    <span class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded font-medium">
+                      👤 {{ getChildNameById(task.child_id) }}
+                    </span>
+                  } @else {
+                    <span class="bg-purple-50 dark:bg-purple-900/30 text-purple-600 px-2 py-0.5 rounded font-medium">
+                      👥 Tất cả các con
+                    </span>
+                  }
+                  @if (task.due_date) {
+                    <span>📅 Hạn: {{ formatDate(task.due_date) }}</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Card Action Buttons -->
+              <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between gap-2">
+                @if (completedTasksTodayIds().has(task.id)) {
+                  <span class="text-xs font-semibold text-emerald-600 inline-flex items-center gap-1">
+                    <span>✅</span>
+                    <span>Đã nộp hôm nay</span>
+                  </span>
+                } @else {
+                  <div class="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      (click)="openSubmitTaskModal(task)"
+                      class="btn btn-primary text-xs !py-1 !px-2.5 flex items-center gap-1"
+                      title="Bé hoàn thành nhiệm vụ và gửi bố mẹ duyệt"
+                    >
+                      <span>✓</span>
+                      <span>Hoàn thành</span>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="quickApproveDirectly(task)"
+                      class="btn bg-amber-500 hover:bg-amber-600 text-white text-xs !py-1 !px-2 flex items-center gap-1"
+                      title="Bố mẹ duyệt hoàn thành ngay tại chỗ"
+                    >
+                      <span>⚡</span>
+                      <span>Duyệt nhanh</span>
+                    </button>
+                  </div>
+                }
+
+                <div class="flex items-center gap-1">
+                  <button
+                    type="button"
+                    (click)="openEditTaskModal(task)"
+                    class="p-1 text-gray-400 hover:text-blue-600 text-xs rounded"
+                    title="Chỉnh sửa nhiệm vụ"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    type="button"
+                    (click)="deleteTask(task)"
+                    class="p-1 text-gray-400 hover:text-red-600 text-xs rounded"
+                    title="Xóa nhiệm vụ"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="card text-center py-12">
+          <div class="text-5xl mb-3">📋✨</div>
+          <p class="text-gray-400 mb-3">
+            {{ taskViewMode() === 'TODAY' ? 'Không có nhiệm vụ nào cần làm hôm nay' : 'Chưa có nhiệm vụ nào trong danh mục này' }}
+          </p>
+          <button (click)="openAddTaskModal()" class="btn btn-primary text-xs">
+            ➕ Giao nhiệm vụ mới ngay
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 2: Chờ duyệt (Task Approvals)          -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'APPROVALS') {
+    <div class="space-y-6">
+      <!-- 1. Task Submissions Waiting for Approval -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-bold flex items-center gap-2">
+            <span>📋</span>
+            <span>Nhiệm vụ con đã nộp chờ bố mẹ duyệt</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-rose-500 text-white font-bold">
+              {{ pendingSubmissions().length }}
+            </span>
+          </h3>
+        </div>
+
+        @if (pendingSubmissions().length > 0) {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            @for (sub of pendingSubmissions(); track sub.id) {
+              <div class="card !p-4 border-l-4 border-amber-500 flex flex-col justify-between gap-3">
+                <div>
+                  <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+                    <span>📅 Nộp ngày: {{ formatDate(sub.submission_date) }}</span>
+                    <span class="font-bold text-amber-600">+{{ sub.points_awarded }} ⭐</span>
+                  </div>
+
+                  <h4 class="font-bold text-base text-gray-900 dark:text-white">
+                    {{ sub.task?.title || 'Nhiệm vụ' }}
+                  </h4>
+
+                  <p class="text-xs font-semibold text-primary-600 mt-1">
+                    👤 Con: {{ sub.child?.name || 'Bé' }}
+                  </p>
+
+                  @if (sub.child_note) {
+                    <div class="mt-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-xs text-gray-600 dark:text-gray-300 italic">
+                      "{{ sub.child_note }}"
+                    </div>
+                  }
+                </div>
+
+                <div class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                  <button
+                    type="button"
+                    (click)="openApprovalModal(sub)"
+                    class="btn btn-primary text-xs flex-1 flex items-center justify-center gap-1.5"
+                  >
+                    <span>✅</span>
+                    <span>Duyệt & Tặng điểm</span>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="taskRepo.rejectTask(sub, currentUser()?.id, 'Con làm lại nhé!')"
+                    class="btn btn-secondary text-xs text-red-600 hover:bg-red-50"
+                  >
+                    <span>❌ Yêu cầu làm lại</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="card text-center py-8 text-gray-400 text-sm">
+            🎉 Không có nhiệm vụ nào đang chờ duyệt. Tất cả đều đã được xử lý!
+          </div>
+        }
+      </div>
+
+      <!-- 2. Reward Redemptions Waiting for Approval -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-bold flex items-center gap-2">
+            <span>🎁</span>
+            <span>Yêu cầu đổi quà chờ duyệt</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500 text-white font-bold">
+              {{ pendingRedemptions().length }}
+            </span>
+          </h3>
+        </div>
+
+        @if (pendingRedemptions().length > 0) {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            @for (red of pendingRedemptions(); track red.id) {
+              <div class="card !p-4 border-l-4 border-purple-500 flex flex-col justify-between gap-3">
+                <div class="flex items-start gap-3">
+                  <div class="text-3xl p-2 bg-purple-50 dark:bg-purple-900/30 rounded-xl">
+                    {{ red.reward?.icon || '🎁' }}
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between text-xs text-gray-400">
+                      <span>📅 {{ formatDate(red.request_date) }}</span>
+                      <span class="font-bold text-purple-600">-{{ red.points_spent }} ⭐</span>
+                    </div>
+                    <h4 class="font-bold text-base mt-0.5">{{ red.reward?.title }}</h4>
+                    <p class="text-xs text-gray-500 mt-0.5">Bé: <strong class="text-gray-700 dark:text-gray-300">{{ red.child?.name }}</strong></p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                  <button
+                    type="button"
+                    (click)="approveRedemption(red)"
+                    class="btn btn-primary text-xs flex-1 flex items-center justify-center gap-1.5"
+                  >
+                    <span>✅ Duyệt đổi quà (-{{ red.points_spent }}⭐)</span>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="rejectRedemption(red)"
+                    class="btn btn-secondary text-xs text-red-600"
+                  >
+                    <span>✕ Từ chối</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="card text-center py-8 text-gray-400 text-sm">
+            Hiện không có yêu cầu đổi quà nào đang chờ duyệt.
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 3: Đổi thưởng (Reward Store)           -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'REWARDS') {
+    <div class="space-y-6">
+      <!-- Store Header & Point Balance -->
+      <div class="card !p-5 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-pink-500/10 border border-amber-200 dark:border-gray-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div>
+          <h3 class="text-xl font-bold flex items-center gap-2">
+            <span>🎁</span>
+            <span>Cửa hàng phần thưởng cho bé</span>
+          </h3>
+          <p class="text-xs text-gray-500 mt-1">Bé tích lũy điểm thưởng từ việc làm nhiệm vụ để đổi những phần quà hấp dẫn này nhé!</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="px-4 py-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-amber-200 dark:border-gray-700 text-center">
+            <span class="text-xs text-gray-400 block">Ví điểm của bé</span>
+            <span class="text-lg font-black text-amber-500">{{ activeChildPoints().balance }} ⭐</span>
+          </div>
+
+          <button (click)="openAddRewardModal()" class="btn btn-primary text-xs flex items-center gap-1.5 whitespace-nowrap">
+            <span>➕</span>
+            <span>Thêm quà mới</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Rewards Grid -->
+      @if (rewards().length > 0) {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (reward of rewards(); track reward.id) {
+            <div class="card !p-5 flex flex-col justify-between border hover:shadow-lg transition-all relative">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center text-3xl shadow-inner">
+                    {{ reward.icon }}
+                  </div>
+                  <span class="text-sm font-black px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700 flex items-center gap-1">
+                    <span>{{ reward.points_cost }}</span>
+                    <span>⭐</span>
+                  </span>
+                </div>
+
+                <h4 class="font-bold text-base text-gray-900 dark:text-white">{{ reward.title }}</h4>
+                @if (reward.description) {
+                  <p class="text-xs text-gray-500 mt-1">{{ reward.description }}</p>
+                }
+              </div>
+
+              <!-- Redeem action -->
+              <div class="mt-5 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  (click)="redeemReward(reward)"
+                  [disabled]="activeChildPoints().balance < reward.points_cost"
+                  class="btn flex-1 text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+                  [class.btn-primary]="activeChildPoints().balance >= reward.points_cost"
+                  [class.bg-gray-200]="activeChildPoints().balance < reward.points_cost"
+                  [class.text-gray-400]="activeChildPoints().balance < reward.points_cost"
+                  [class.cursor-not-allowed]="activeChildPoints().balance < reward.points_cost"
+                >
+                  <span>🎁</span>
+                  <span>{{ activeChildPoints().balance >= reward.points_cost ? 'Đổi quà ngay' : 'Chưa đủ điểm' }}</span>
+                </button>
+
+                <div class="flex items-center gap-1">
+                  <button
+                    type="button"
+                    (click)="openEditRewardModal(reward)"
+                    class="p-1 text-gray-400 hover:text-blue-600 text-xs"
+                    title="Sửa quà"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    type="button"
+                    (click)="deleteReward(reward)"
+                    class="p-1 text-gray-400 hover:text-red-600 text-xs"
+                    title="Xóa quà"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Redemptions History Table -->
+      <div class="card space-y-3">
+        <h4 class="font-bold text-base flex items-center gap-2">
+          <span>📜</span>
+          <span>Lịch sử đổi quà</span>
+        </h4>
+
+        @if (redemptions().length > 0) {
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="text-xs text-gray-500 border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th class="py-2.5 px-3">Ngày đổi</th>
+                  <th class="py-2.5 px-3">Bé</th>
+                  <th class="py-2.5 px-3">Món quà</th>
+                  <th class="py-2.5 px-3">Điểm dùng</th>
+                  <th class="py-2.5 px-3">Trạng thái</th>
+                  <th class="py-2.5 px-3 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60 text-xs">
+                @for (rd of redemptions(); track rd.id) {
+                  <tr>
+                    <td class="py-2.5 px-3 text-gray-500 whitespace-nowrap">{{ formatDate(rd.request_date) }}</td>
+                    <td class="py-2.5 px-3 font-medium whitespace-nowrap">{{ rd.child?.name }}</td>
+                    <td class="py-2.5 px-3 font-semibold">{{ rd.reward?.icon }} {{ rd.reward?.title }}</td>
+                    <td class="py-2.5 px-3 font-bold text-amber-600">{{ rd.points_spent }} ⭐</td>
+                    <td class="py-2.5 px-3 whitespace-nowrap">
+                      @if (rd.status === 'PENDING') {
+                        <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 font-medium">Chờ duyệt</span>
+                      } @else if (rd.status === 'APPROVED') {
+                        <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 font-medium">Đã duyệt (Chờ trao)</span>
+                      } @else if (rd.status === 'FULFILLED') {
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 font-medium">🎉 Đã trao quà</span>
+                      } @else {
+                        <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-900/30 font-medium">Đã từ chối</span>
+                      }
+                    </td>
+                    <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                      @if (rd.status === 'APPROVED') {
+                        <button
+                          type="button"
+                          (click)="fulfillRedemption(rd)"
+                          class="text-xs px-2.5 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                        >
+                          Xác nhận đã trao quà
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="text-xs text-gray-400 py-4 text-center">Chưa có lịch sử đổi quà nào</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 4: Điểm thưởng & Lịch sử               -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'POINTS') {
+    <div class="space-y-6">
+      <!-- 3 Point Stats Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="card !p-4 bg-gradient-to-br from-amber-50 to-amber-100/60 dark:from-amber-900/20 dark:to-gray-800 border-amber-200">
+          <span class="text-xs text-amber-700 dark:text-amber-400 font-medium">⭐ Điểm khả dụng</span>
+          <div class="text-2xl font-black text-amber-600 mt-1">
+            {{ activeChildPoints().balance }} điểm
+          </div>
+          <span class="text-[11px] text-gray-400">Có thể dùng để đổi quà ngay</span>
+        </div>
+
+        <div class="card !p-4 bg-gradient-to-br from-emerald-50 to-emerald-100/60 dark:from-emerald-900/20 dark:to-gray-800 border-emerald-200">
+          <span class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">🎯 Tổng điểm đã kiếm</span>
+          <div class="text-2xl font-black text-emerald-600 mt-1">
+            {{ activeChildPoints().earned }} điểm
+          </div>
+          <span class="text-[11px] text-gray-400">Tích lũy từ tất cả nhiệm vụ</span>
+        </div>
+
+        <div class="card !p-4 bg-gradient-to-br from-purple-50 to-purple-100/60 dark:from-purple-900/20 dark:to-gray-800 border-purple-200">
+          <span class="text-xs text-purple-700 dark:text-purple-400 font-medium">🎁 Điểm đã đổi quà</span>
+          <div class="text-2xl font-black text-purple-600 mt-1">
+            {{ activeChildPoints().spent }} điểm
+          </div>
+          <span class="text-[11px] text-gray-400">Đã dùng để nhận phần thưởng</span>
+        </div>
+      </div>
+
+      <!-- Point Transactions Table -->
+      <div class="card space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-base flex items-center gap-2">
+            <span>📜</span>
+            <span>Sổ cái biến động điểm thưởng</span>
+          </h3>
+
+          <button (click)="openAdjustPointsModal('BONUS')" class="btn btn-primary text-xs flex items-center gap-1.5">
+            <span>➕</span>
+            <span>Điều chỉnh điểm thủ công</span>
+          </button>
+        </div>
+
+        @if (filteredTransactions().length > 0) {
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                <tr>
+                  <th class="py-3 px-4">Thời gian</th>
+                  <th class="py-3 px-4">Nội dung</th>
+                  <th class="py-3 px-4">Loại giao dịch</th>
+                  <th class="py-3 px-4 text-right">Biến động điểm</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700 text-xs">
+                @for (tx of filteredTransactions(); track tx.id) {
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                    <td class="py-3 px-4 text-gray-500 whitespace-nowrap">{{ formatDate(tx.created_at) }}</td>
+                    <td class="py-3 px-4 font-medium">{{ tx.description }}</td>
+                    <td class="py-3 px-4 whitespace-nowrap">
+                      @if (tx.type === 'TASK_REWARD') {
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 font-medium">Nhiệm vụ</span>
+                      } @else if (tx.type === 'REWARD_REDEEM') {
+                        <span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 font-medium">Đổi quà</span>
+                      } @else if (tx.type === 'BONUS') {
+                        <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 font-medium">Thưởng nóng</span>
+                      } @else {
+                        <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-900/30 font-medium">Phạt điểm</span>
+                      }
+                    </td>
+                    <td class="py-3 px-4 text-right font-black whitespace-nowrap"
+                      [class.text-emerald-600]="tx.amount > 0"
+                      [class.text-rose-600]="tx.amount < 0"
+                    >
+                      {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount }} ⭐
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="text-center py-8 text-gray-400 text-sm">
+            Chưa có giao dịch điểm nào
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 5: Thành tích & Bảng xếp hạng          -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'RANKING') {
+    <div class="space-y-6">
+      <!-- 1. Family Leaderboard -->
+      <div class="card space-y-4">
+        <h3 class="text-lg font-bold flex items-center gap-2">
+          <span>🏆</span>
+          <span>Bảng xếp hạng các con trong gia đình</span>
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (item of leaderboard(); track item.childId; let idx = $index) {
+            <div
+              class="card !p-5 border-2 flex flex-col justify-between relative overflow-hidden transition-all"
+              [class.border-amber-400]="idx === 0"
+              [class.bg-gradient-to-br]="idx === 0"
+              [class.from-amber-50]="idx === 0"
+              [class.to-white]="idx === 0"
+              [class.border-gray-200]="idx !== 0"
+            >
+              <!-- Rank Crown / Medal -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">
+                    @if (idx === 0) { 🥇 👑 }
+                    @else if (idx === 1) { 🥈 }
+                    @else if (idx === 2) { 🥉 }
+                    @else { #{{ idx + 1 }} }
+                  </span>
+                  <span class="font-bold text-base">{{ item.childName }}</span>
+                </div>
+                <span class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800">
+                  {{ item.levelTitle }}
+                </span>
+              </div>
+
+              <!-- Stats -->
+              <div class="grid grid-cols-3 gap-2 py-3 border-y border-gray-100 dark:border-gray-700 text-center">
+                <div>
+                  <span class="text-[10px] text-gray-400 block">Khả dụng</span>
+                  <span class="font-bold text-amber-500 text-sm">{{ item.currentPoints }}⭐</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-gray-400 block">Đã kiếm</span>
+                  <span class="font-bold text-emerald-600 text-sm">{{ item.totalEarned }}⭐</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-gray-400 block">Nhiệm vụ</span>
+                  <span class="font-bold text-blue-600 text-sm">{{ item.completedTasksCount }}✓</span>
+                </div>
+              </div>
+
+              <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+                <span>Huy hiệu mở khóa:</span>
+                <span class="font-bold text-amber-600">{{ item.badgesCount }} 🎖️</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- 2. Badges Showcase -->
+      <div class="card space-y-4">
+        <div>
+          <h3 class="text-lg font-bold flex items-center gap-2">
+            <span>🎖️</span>
+            <span>Bộ sưu tập huy hiệu thành tích của {{ selectedChild()?.name || 'bé' }}</span>
+          </h3>
+          <p class="text-xs text-gray-500">Hoàn thành nhiệm vụ và tích lũy điểm để mở khóa các huy hiệu danh giá này nhé!</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (badge of activeChildBadges(); track badge.key) {
+            <div
+              class="p-4 rounded-2xl border flex items-center gap-4 transition-all"
+              [class.bg-gradient-to-br]="badge.unlocked"
+              [class.from-amber-50]="badge.unlocked"
+              [class.to-orange-50]="badge.unlocked"
+              [class.border-amber-300]="badge.unlocked"
+              [class.shadow-sm]="badge.unlocked"
+              [class.bg-gray-50]="!badge.unlocked"
+              [class.dark:bg-gray-800]="!badge.unlocked"
+              [class.border-gray-200]="!badge.unlocked"
+              [class.opacity-60]="!badge.unlocked"
+            >
+              <div
+                class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm flex-shrink-0"
+                [class.bg-amber-400]="badge.unlocked"
+                [class.text-white]="badge.unlocked"
+                [class.bg-gray-200]="!badge.unlocked"
+                [class.grayscale]="!badge.unlocked"
+              >
+                {{ badge.icon }}
+              </div>
+
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <h4 class="font-bold text-sm">{{ badge.name }}</h4>
+                  @if (badge.unlocked) {
+                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500 text-white font-bold">✓ Đạt</span>
+                  }
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5">{{ badge.description }}</p>
+                <span class="text-[10px] text-gray-400 block mt-1">Điều kiện: {{ badge.requiredCondition }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 6: Phân loại nhiệm vụ (Categories)     -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'CATEGORIES') {
+    <div class="card space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-bold flex items-center gap-2">
+            <span>📑</span>
+            <span>Danh mục phân loại nhiệm vụ</span>
+          </h3>
+          <p class="text-xs text-gray-500">Giúp bố mẹ phân nhóm việc nhà, học tập, rèn luyện rõ ràng</p>
+        </div>
+
+        <button (click)="openAddCategoryModal()" class="btn btn-primary text-xs flex items-center gap-1.5">
+          <span>➕</span>
+          <span>Thêm danh mục mới</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (cat of categories(); track cat.id) {
+          <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/30">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                [style.background-color]="cat.color + '20'"
+                [style.color]="cat.color"
+              >
+                {{ cat.icon }}
+              </div>
+              <div>
+                <h4 class="font-bold text-sm">{{ cat.name }}</h4>
+                <span class="text-[11px] text-gray-400">
+                  {{ cat.is_default ? 'Mặc định' : 'Tự tạo' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="w-3 h-3 rounded-full" [style.background-color]="cat.color"></div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL: Giao / Sửa nhiệm vụ                 -->
+  <!-- ========================================== -->
+  @if (showTaskModal()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-4">
+        <h3 class="text-xl font-bold">
+          {{ editingTaskId() ? 'Chỉnh sửa nhiệm vụ' : 'Giao nhiệm vụ mới cho con' }}
+        </h3>
+
+        <form [formGroup]="taskForm" (ngSubmit)="saveTask()" class="space-y-4">
+          <div>
+            <label class="label">Tên nhiệm vụ *</label>
+            <input
+              type="text"
+              formControlName="title"
+              placeholder="VD: Dọn dẹp phòng ngủ, Làm bài tập Toán..."
+              class="input"
+            />
+          </div>
+
+          <div>
+            <label class="label">Mô tả chi tiết</label>
+            <textarea
+              formControlName="description"
+              rows="2"
+              placeholder="Hướng dẫn con cách hoàn thành nhiệm vụ..."
+              class="input"
+            ></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Phân loại *</label>
+              <select formControlName="category_id" class="input">
+                @for (cat of categories(); track cat.id) {
+                  <option [value]="cat.id">{{ cat.icon }} {{ cat.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="label">Điểm thưởng (⭐) *</label>
+              <input
+                type="number"
+                formControlName="points"
+                class="input"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="label">Giao cho bé nào</label>
+            <select formControlName="child_id" class="input">
+              <option value="">Tất cả các con</option>
+              @for (c of children(); track c.id) {
+                <option [value]="c.id">{{ c.gender === 'BOY' ? '👦' : '👧' }} {{ c.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Lập lịch định kỳ *</label>
+              <select formControlName="schedule_type" class="input">
+                <option value="DAILY">Hàng ngày</option>
+                <option value="WEEKLY">Hàng tuần</option>
+                <option value="CUSTOM_DAYS">Các ngày tùy chọn</option>
+                <option value="ONCE">Làm một lần</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="label">Hạn chót (dd/MM/yyyy)</label>
+              <input
+                type="date"
+                formControlName="due_date"
+                class="input"
+              />
+            </div>
+          </div>
+
+          @if (taskForm.get('schedule_type')?.value === 'CUSTOM_DAYS') {
+            <div>
+              <label class="label">Chọn các ngày trong tuần</label>
+              <div class="flex gap-1.5">
+                @for (day of dayKeys; track day) {
+                  <button
+                    type="button"
+                    (click)="toggleDayInSchedule(day)"
+                    class="flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-colors"
+                    [class.bg-primary-600]="isDaySelected(day)"
+                    [class.text-white]="isDaySelected(day)"
+                    [class.border-primary-600]="isDaySelected(day)"
+                    [class.border-gray-300]="!isDaySelected(day)"
+                  >
+                    {{ dayLabels[day] }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="flex justify-end gap-3 pt-3">
+            <button type="button" (click)="closeTaskModal()" class="btn btn-secondary">
+              Hủy
+            </button>
+            <button type="submit" [disabled]="taskForm.invalid" class="btn btn-primary">
+              Lưu nhiệm vụ
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL: Bé nộp nhiệm vụ kèm ghi chú         -->
+  <!-- ========================================== -->
+  @if (showSubmitNoteModal()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <h3 class="text-xl font-bold flex items-center gap-2">
+          <span>✓</span>
+          <span>Xác nhận hoàn thành nhiệm vụ</span>
+        </h3>
+
+        <p class="text-sm text-gray-500">
+          Nhiệm vụ: <strong class="text-gray-900 dark:text-white">{{ submittingTask()?.title }}</strong>
+          (+{{ submittingTask()?.points }} ⭐)
+        </p>
+
+        <div>
+          <label class="label">Lời nhắn gửi bố mẹ (tùy chọn)</label>
+          <textarea
+            [ngModel]="taskSubmitNote()"
+            (ngModelChange)="taskSubmitNote.set($event)"
+            rows="3"
+            placeholder="Con đã dọn dẹp sạch sẽ rồi ạ! Bố mẹ kiểm tra giúp con nhé..."
+            class="input"
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" (click)="closeSubmitTaskModal()" class="btn btn-secondary">
+            Hủy
+          </button>
+          <button type="button" (click)="confirmSubmitTask()" class="btn btn-primary">
+            Gửi duyệt ngay
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL: Bố mẹ duyệt bài nộp                 -->
+  <!-- ========================================== -->
+  @if (showApprovalModal()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <h3 class="text-xl font-bold flex items-center gap-2">
+          <span>⭐</span>
+          <span>Duyệt nhiệm vụ của con</span>
+        </h3>
+
+        <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-1 text-sm">
+          <p>Nhiệm vụ: <strong>{{ reviewingSubmission()?.task?.title }}</strong></p>
+          <p>Bé: <strong>{{ reviewingSubmission()?.child?.name }}</strong></p>
+          <p>Điểm thưởng: <strong class="text-amber-600">+{{ reviewingSubmission()?.points_awarded }} ⭐</strong></p>
+          @if (reviewingSubmission()?.child_note) {
+            <p class="text-xs text-gray-500 italic mt-1">"{{ reviewingSubmission()?.child_note }}"</p>
+          }
+        </div>
+
+        <div>
+          <label class="label">Lời khen / Lời nhắn gửi con</label>
+          <textarea
+            [ngModel]="approvalFeedback()"
+            (ngModelChange)="approvalFeedback.set($event)"
+            rows="3"
+            class="input"
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" (click)="closeApprovalModal()" class="btn btn-secondary">
+            Hủy
+          </button>
+          <button type="button" (click)="approveSubmission()" class="btn btn-primary">
+            Duyệt & Tặng điểm
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL: Thêm / Sửa phần thưởng              -->
+  <!-- ========================================== -->
+  @if (showRewardModal()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <h3 class="text-xl font-bold">
+          {{ editingRewardId() ? 'Chỉnh sửa phần thưởng' : 'Thêm phần thưởng mới' }}
+        </h3>
+
+        <form [formGroup]="rewardForm" (ngSubmit)="saveReward()" class="space-y-4">
+          <div>
+            <label class="label">Tên phần thưởng *</label>
+            <input
+              type="text"
+              formControlName="title"
+              placeholder="VD: 30 phút xem hoạt hình, Đi công viên..."
+              class="input"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Biểu tượng (Icon) *</label>
+              <input
+                type="text"
+                formControlName="icon"
+                placeholder="VD: 🎮, 🍦, 🍕, 🎁"
+                class="input"
+              />
+            </div>
+
+            <div>
+              <label class="label">Số điểm cần đổi (⭐) *</label>
+              <input
+                type="number"
+                formControlName="points_cost"
+                class="input"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="label">Mô tả phần thưởng</label>
+            <textarea
+              formControlName="description"
+              rows="2"
+              placeholder="Mô tả cụ thể quà tặng..."
+              class="input"
+            ></textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" (click)="closeRewardModal()" class="btn btn-secondary">
+              Hủy
+            </button>
+            <button type="submit" [disabled]="rewardForm.invalid" class="btn btn-primary">
+              Lưu phần thưởng
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL: Thưởng nóng / Trừ điểm              -->
+  <!-- ========================================== -->
+  @if (showAdjustPointsModal()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <h3 class="text-xl font-bold">Điều chỉnh điểm thưởng cho con</h3>
+
+        <form [formGroup]="adjustPointsForm" (ngSubmit)="saveAdjustPoints()" class="space-y-4">
+          <div>
+            <label class="label">Chọn bé *</label>
+            <select formControlName="child_id" class="input">
+              @for (c of children(); track c.id) {
+                <option [value]="c.id">{{ c.gender === 'BOY' ? '👦' : '👧' }} {{ c.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Hành động *</label>
+              <select formControlName="type" class="input">
+                <option value="BONUS">⭐ Thưởng nóng (+)</option>
+                <option value="PENALTY">⚠️ Trừ điểm (-)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="label">Số điểm *</label>
+              <input
+                type="number"
+                formControlName="amount"
+                class="input"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="label">Lý do điều chỉnh *</label>
+            <input
+              type="text"
+              formControlName="description"
+              placeholder="VD: Giúp bà qua đường, Ăn cơm ngoan không xem TV..."
+              class="input"
+            />
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" (click)="closeAdjustPointsModal()" class="btn btn-secondary">
+              Hủy
+            </button>
+            <button type="submit" [disabled]="adjustPointsForm.invalid" class="btn btn-primary">
+              Cập nhật điểm
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL: Thêm danh mục nhiệm vụ              -->
+  <!-- ========================================== -->
+  @if (showCategoryModal()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <h3 class="text-xl font-bold">Thêm danh mục nhiệm vụ mới</h3>
+
+        <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="space-y-4">
+          <div>
+            <label class="label">Tên danh mục *</label>
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="VD: Nghệ thuật, Kỹ năng sống..."
+              class="input"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Biểu tượng (Icon) *</label>
+              <input
+                type="text"
+                formControlName="icon"
+                placeholder="VD: 🎨, 🎵, 🏊"
+                class="input"
+              />
+            </div>
+
+            <div>
+              <label class="label">Mã màu *</label>
+              <input
+                type="color"
+                formControlName="color"
+                class="h-10 w-full rounded-lg cursor-pointer border"
+              />
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" (click)="closeCategoryModal()" class="btn btn-secondary">
+              Hủy
+            </button>
+            <button type="submit" [disabled]="categoryForm.invalid" class="btn btn-primary">
+              Tạo danh mục
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+</div>

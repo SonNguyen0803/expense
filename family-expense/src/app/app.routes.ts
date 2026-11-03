@@ -68,6 +68,21 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'kids-tasks',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/kids-tasks/kids-tasks.component').then(m => m.KidsTasksComponent)
+  },
+  {
+    path: 'tasks',
+    redirectTo: 'kids-tasks',
+    pathMatch: 'full'
+  },
+  {
+    path: 'rewards',
+    redirectTo: 'kids-tasks',
+    pathMatch: 'full'
+  },
+  {
     path: 'family',
     canActivate: [authGuard],
     loadComponent: () => import('./features/family/family-settings/family-settings.component').then(m => m.FamilySettingsComponent)

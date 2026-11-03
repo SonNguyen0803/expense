@@ -27,6 +27,11 @@
           <span>👶</span>
           <span>Sự phát triển của bé</span>
         </a>
+        <a routerLink="/kids-tasks" routerLinkActive="bg-primary-50 dark:bg-primary-900/20 text-primary-600"
+          class="nav-link">
+          <span>⭐</span>
+          <span>Nhiệm vụ & Đổi thưởng</span>
+        </a>
         <a routerLink="/family" routerLinkActive="bg-primary-50 dark:bg-primary-900/20 text-primary-600"
           class="nav-link">
           <span>👨‍👩‍👧‍👦</span>
@@ -93,6 +98,11 @@
           routerLinkActive="bg-primary-100 dark:bg-primary-900/40 text-primary-600" class="nav-link">
           <span>👶</span>
           <span>Sự phát triển của bé</span>
+        </a>
+        <a routerLink="/kids-tasks" (click)="closeMenu()"
+          routerLinkActive="bg-primary-100 dark:bg-primary-900/40 text-primary-600" class="nav-link">
+          <span>⭐</span>
+          <span>Nhiệm vụ & Đổi thưởng</span>
         </a>
         <a routerLink="/family" (click)="closeMenu()"
           routerLinkActive="bg-primary-100 dark:bg-primary-900/40 text-primary-600" class="nav-link">
