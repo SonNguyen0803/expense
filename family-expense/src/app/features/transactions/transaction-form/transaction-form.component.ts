@@ -148,17 +148,15 @@ export class TransactionFormComponent implements OnInit {
   }
 
   async ngOnInit() {
-    const family = this.currentFamily();
+    let family = this.currentFamily();
+    if (!family) {
+      const families = await this.familyRepo.loadFamilies();
+      family = families && families.length > 0 ? families[0] : null;
+    }
+
     if (family) {
       await this.categoryRepo.loadCategories(family.id);
       await this.familyRepo.loadMembers(family.id);
-      
-      this.updateFilteredCategories(this.transactionForm.get('type')?.value);
-      
-      const currentMember = await this.familyRepo.getCurrentMember();
-      if (currentMember) {
-        this.transactionForm.patchValue({ member_id: currentMember.id });
-      }
     }
 
     // Check if we're in edit mode
@@ -166,6 +164,14 @@ export class TransactionFormComponent implements OnInit {
     if (this.transactionId) {
       this.isEditMode.set(true);
       await this.loadTransaction(this.transactionId);
+    } else {
+      // Create mode: initialize filtered categories and set default category to "Ăn uống"
+      this.updateFilteredCategories(this.transactionForm.get('type')?.value, true);
+
+      const currentMember = await this.familyRepo.getCurrentMember();
+      if (currentMember) {
+        this.transactionForm.patchValue({ member_id: currentMember.id });
+      }
     }
   }
 
@@ -196,9 +202,36 @@ export class TransactionFormComponent implements OnInit {
     }
   }
 
-  updateFilteredCategories(type: string) {
+  updateFilteredCategories(type: string, isInitial = false) {
     const filtered = this.categories().filter(c => c.type === type);
     this.filteredCategories.set(filtered);
+
+    // When creating a new transaction, default to "Ăn uống" if available
+    if (!this.isEditMode()) {
+      const currentCatId = this.transactionForm.get('category_id')?.value;
+      const isCurrentCatValid = filtered.some(c => c.id === currentCatId);
+
+      if (isInitial || !currentCatId || !isCurrentCatValid) {
+        if (type === 'EXPENSE') {
+          const diningCategory = filtered.find(c => this.isDiningCategory(c.name));
+          this.transactionForm.patchValue({
+            category_id: diningCategory ? diningCategory.id : (filtered[0]?.id || '')
+          });
+        } else {
+          this.transactionForm.patchValue({
+            category_id: filtered[0]?.id || ''
+          });
+        }
+      }
+    }
+  }
+
+  private isDiningCategory(name: string): boolean {
+    if (!name) return false;
+    const lower = name.toLowerCase().trim();
+    if (lower === 'ăn uống' || lower.includes('ăn uống')) return true;
+    const stripped = lower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return stripped === 'an uong' || stripped.includes('an uong');
   }
 
   async onSubmit() {

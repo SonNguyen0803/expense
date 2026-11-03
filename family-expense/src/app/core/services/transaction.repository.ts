@@ -7,6 +7,7 @@ export interface TransactionFilters {
   type?: TransactionType;
   categoryId?: string;
   memberId?: string;
+  createdBy?: string;
   startDate?: string;
   endDate?: string;
   search?: string;
@@ -49,6 +50,10 @@ export class TransactionRepository {
 
       if (filters?.memberId) {
         query = query.eq('member_id', filters.memberId);
+      }
+
+      if (filters?.createdBy) {
+        query = query.eq('created_by', filters.createdBy);
       }
 
       if (filters?.startDate) {
