@@ -58,6 +58,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent)
   },
   {
+    path: 'children',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/child-management/child-management.component').then(m => m.ChildManagementComponent)
+  },
+  {
+    path: 'child-management',
+    redirectTo: 'children',
+    pathMatch: 'full'
+  },
+  {
     path: 'family',
     canActivate: [authGuard],
     loadComponent: () => import('./features/family/family-settings/family-settings.component').then(m => m.FamilySettingsComponent)

@@ -1,0 +1,922 @@
+<div class="p-3 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+
+  <!-- ========================================== -->
+  <!-- Top Header: Title & Child Selector Tabs    -->
+  <!-- ========================================== -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-2">
+        <span>👶</span>
+        <span>Theo dõi sự phát triển của bé</span>
+      </h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Quản lý chiều cao, cân nặng, biểu đồ tăng trưởng và các mốc phát triển quan trọng
+      </p>
+    </div>
+
+    <!-- Children Selector / Add Child Button -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1">
+      @for (child of children(); track child.id) {
+        <button
+          type="button"
+          (click)="selectChild(child)"
+          class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all shadow-sm border"
+          [class.bg-primary-600]="selectedChild()?.id === child.id"
+          [class.text-white]="selectedChild()?.id === child.id"
+          [class.border-primary-600]="selectedChild()?.id === child.id"
+          [class.bg-white]="selectedChild()?.id !== child.id"
+          [class.dark:bg-gray-800]="selectedChild()?.id !== child.id"
+          [class.text-gray-700]="selectedChild()?.id !== child.id"
+          [class.dark:text-gray-200]="selectedChild()?.id !== child.id"
+          [class.border-gray-200]="selectedChild()?.id !== child.id"
+          [class.dark:border-gray-700]="selectedChild()?.id !== child.id"
+        >
+          <span class="text-lg">{{ child.gender === 'BOY' ? '👦' : '👧' }}</span>
+          <span>{{ child.name }}</span>
+        </button>
+      }
+
+      <button
+        type="button"
+        (click)="openAddChildModal()"
+        class="flex items-center gap-1.5 px-3 py-2 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 rounded-xl text-sm font-medium transition-colors border border-dashed border-primary-300 dark:border-primary-700 whitespace-nowrap"
+      >
+        <span>➕</span>
+        <span>Thêm bé</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- State: No Children in Family               -->
+  <!-- ========================================== -->
+  @if (children().length === 0) {
+    <div class="card text-center py-16">
+      <div class="text-6xl mb-4">👶🍼</div>
+      <h3 class="text-xl font-bold mb-2">Chưa có thông tin bé nào trong gia đình</h3>
+      <p class="text-gray-500 max-w-md mx-auto mb-6">
+        Hãy thêm hồ sơ của bé để bắt đầu theo dõi chiều cao, cân nặng, biểu đồ tăng trưởng theo chuẩn WHO và các mốc phát triển đầu đời.
+      </p>
+      <button (click)="openAddChildModal()" class="btn btn-primary inline-flex items-center gap-2">
+        <span>➕</span>
+        <span>Thêm hồ sơ bé ngay</span>
+      </button>
+    </div>
+  } @else if (selectedChild()) {
+
+    <!-- ========================================== -->
+    <!-- Child Overview & Quick Growth Stats        -->
+    <!-- ========================================== -->
+    <div class="card bg-gradient-to-br from-white to-primary-50/30 dark:from-gray-800 dark:to-gray-800/80 border border-primary-100 dark:border-gray-700">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+
+        <!-- Child Basic Info -->
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-4xl shadow-inner">
+            {{ selectedChild()?.gender === 'BOY' ? '👦' : '👧' }}
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-xl md:text-2xl font-bold">{{ selectedChild()?.name }}</h2>
+              <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold"
+                [class.bg-blue-100]="selectedChild()?.gender === 'BOY'"
+                [class.text-blue-700]="selectedChild()?.gender === 'BOY'"
+                [class.bg-pink-100]="selectedChild()?.gender === 'GIRL'"
+                [class.text-pink-700]="selectedChild()?.gender === 'GIRL'"
+              >
+                {{ selectedChild()?.gender === 'BOY' ? 'Bé trai' : 'Bé gái' }}
+              </span>
+            </div>
+            <p class="text-sm text-gray-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>🎂 {{ formatDate(selectedChild()!.birth_date) }}</span>
+              <span>•</span>
+              <span class="font-medium text-primary-600 dark:text-primary-400">{{ currentAge()?.label }}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick Measurement Stats Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1 lg:max-w-2xl">
+          <!-- Height Card -->
+          <div class="p-3 bg-white dark:bg-gray-700/60 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <span class="text-xs text-gray-500">📏 Chiều cao</span>
+            <div class="text-lg md:text-xl font-bold text-blue-600 mt-0.5">
+              {{ latestRecord() ? latestRecord()!.height + ' cm' : '--' }}
+            </div>
+            @if (whoComparison()) {
+              <span class="text-[11px]" [class.text-emerald-600]="whoComparison()!.heightDiff >= 0" [class.text-amber-600]="whoComparison()!.heightDiff < 0">
+                {{ whoComparison()!.heightDiff >= 0 ? '+' : '' }}{{ whoComparison()!.heightDiff }} cm vs WHO
+              </span>
+            } @else {
+              <span class="text-[11px] text-gray-400">Chưa có số đo</span>
+            }
+          </div>
+
+          <!-- Weight Card -->
+          <div class="p-3 bg-white dark:bg-gray-700/60 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <span class="text-xs text-gray-500">⚖️ Cân nặng</span>
+            <div class="text-lg md:text-xl font-bold text-orange-600 mt-0.5">
+              {{ latestRecord() ? latestRecord()!.weight + ' kg' : '--' }}
+            </div>
+            @if (whoComparison()) {
+              <span class="text-[11px]" [class.text-emerald-600]="whoComparison()!.weightDiff >= 0" [class.text-amber-600]="whoComparison()!.weightDiff < 0">
+                {{ whoComparison()!.weightDiff >= 0 ? '+' : '' }}{{ whoComparison()!.weightDiff }} kg vs WHO
+              </span>
+            } @else {
+              <span class="text-[11px] text-gray-400">Chưa có số đo</span>
+            }
+          </div>
+
+          <!-- BMI Status Card -->
+          <div class="p-3 bg-white dark:bg-gray-700/60 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <span class="text-xs text-gray-500">🩺 Chỉ số BMI</span>
+            <div class="text-lg md:text-xl font-bold mt-0.5">
+              {{ currentBMI()?.bmi ? currentBMI()!.bmi : '--' }}
+            </div>
+            @if (currentBMI()) {
+              <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold inline-block truncate max-w-full" [ngClass]="currentBMI()!.badgeClass">
+                {{ currentBMI()!.label }}
+              </span>
+            }
+          </div>
+
+          <!-- Quick Action -->
+          <div class="flex items-center justify-center p-2">
+            <button
+              (click)="openAddRecordModal()"
+              class="w-full h-full py-2.5 px-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shadow-sm flex flex-col items-center justify-center gap-1 transition-colors"
+            >
+              <span class="text-base">➕</span>
+              <span>Ghi số đo</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- Feature Tabs Navigation                    -->
+    <!-- ========================================== -->
+    <div class="border-b border-gray-200 dark:border-gray-700">
+      <nav class="flex gap-4 md:gap-8 overflow-x-auto">
+        <button
+          type="button"
+          (click)="activeTab.set('CHART')"
+          class="py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2"
+          [class.border-primary-600]="activeTab() === 'CHART'"
+          [class.text-primary-600]="activeTab() === 'CHART'"
+          [class.border-transparent]="activeTab() !== 'CHART'"
+          [class.text-gray-500]="activeTab() !== 'CHART'"
+        >
+          <span>📈</span>
+          <span>Biểu đồ tăng trưởng</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('HISTORY')"
+          class="py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2"
+          [class.border-primary-600]="activeTab() === 'HISTORY'"
+          [class.text-primary-600]="activeTab() === 'HISTORY'"
+          [class.border-transparent]="activeTab() !== 'HISTORY'"
+          [class.text-gray-500]="activeTab() !== 'HISTORY'"
+        >
+          <span>📋</span>
+          <span>Lịch sử phát triển (Tháng/Năm)</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+            {{ growthRecords().length }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('MILESTONES')"
+          class="py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2"
+          [class.border-primary-600]="activeTab() === 'MILESTONES'"
+          [class.text-primary-600]="activeTab() === 'MILESTONES'"
+          [class.border-transparent]="activeTab() !== 'MILESTONES'"
+          [class.text-gray-500]="activeTab() !== 'MILESTONES'"
+        >
+          <span>🏆</span>
+          <span>Các mốc phát triển</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+            {{ milestoneStats().achieved }}/{{ milestoneStats().total }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('PROFILE')"
+          class="py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2"
+          [class.border-primary-600]="activeTab() === 'PROFILE'"
+          [class.text-primary-600]="activeTab() === 'PROFILE'"
+          [class.border-transparent]="activeTab() !== 'PROFILE'"
+          [class.text-gray-500]="activeTab() !== 'PROFILE'"
+        >
+          <span>⚙️</span>
+          <span>Hồ sơ của bé</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: Biểu đồ tăng trưởng (Growth Chart)  -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'CHART') {
+      <div class="space-y-4">
+        <!-- Controls & Chart Header -->
+        <div class="card">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 class="text-lg font-bold">Biểu đồ đường tăng trưởng & Chuẩn WHO</h3>
+              <p class="text-xs text-gray-500">So sánh chỉ số thực tế của bé với đường trung bình chuẩn phát triển của Tổ chức Y tế Thế giới (WHO)</p>
+            </div>
+
+            <!-- Metric switcher -->
+            <div class="inline-flex rounded-lg bg-gray-100 dark:bg-gray-700 p-1 self-start sm:self-auto">
+              <button
+                type="button"
+                (click)="chartMetric.set('COMBINED')"
+                class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                [class.bg-white]="chartMetric() === 'COMBINED'"
+                [class.dark:bg-gray-800]="chartMetric() === 'COMBINED'"
+                [class.shadow-sm]="chartMetric() === 'COMBINED'"
+                [class.text-primary-600]="chartMetric() === 'COMBINED'"
+              >
+                📊 Cả hai
+              </button>
+              <button
+                type="button"
+                (click)="chartMetric.set('HEIGHT')"
+                class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                [class.bg-white]="chartMetric() === 'HEIGHT'"
+                [class.dark:bg-gray-800]="chartMetric() === 'HEIGHT'"
+                [class.shadow-sm]="chartMetric() === 'HEIGHT'"
+                [class.text-blue-600]="chartMetric() === 'HEIGHT'"
+              >
+                📏 Chiều cao
+              </button>
+              <button
+                type="button"
+                (click)="chartMetric.set('WEIGHT')"
+                class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                [class.bg-white]="chartMetric() === 'WEIGHT'"
+                [class.dark:bg-gray-800]="chartMetric() === 'WEIGHT'"
+                [class.shadow-sm]="chartMetric() === 'WEIGHT'"
+                [class.text-orange-600]="chartMetric() === 'WEIGHT'"
+              >
+                ⚖️ Cân nặng
+              </button>
+            </div>
+          </div>
+
+          <!-- Chart Area -->
+          @if (growthRecords().length > 0) {
+            <div echarts [options]="growthChartOption()" class="h-96 w-full"></div>
+          } @else {
+            <div class="h-80 flex flex-col items-center justify-center text-center">
+              <p class="text-gray-400 mb-3">Chưa có số đo nào để hiển thị biểu đồ</p>
+              <button (click)="openAddRecordModal()" class="btn btn-primary text-sm">
+                ➕ Thêm số đo đầu tiên
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Insights Summary Card -->
+        @if (growthRecords().length > 0 && whoComparison()) {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Height Assessment -->
+            <div class="card p-4 border-l-4 border-blue-500">
+              <h4 class="font-bold text-sm text-gray-700 dark:text-gray-300 mb-1">📏 Đánh giá Chiều cao</h4>
+              <p class="text-sm">
+                Số đo mới nhất: <strong class="text-blue-600">{{ latestRecord()!.height }} cm</strong>.
+                Chuẩn WHO cùng độ tuổi là <strong>{{ whoComparison()!.standardHeight }} cm</strong>.
+                @if (whoComparison()!.heightDiff >= 0) {
+                  <span class="text-emerald-600 font-medium"> (Cao hơn chuẩn +{{ whoComparison()!.heightDiff }} cm 👍)</span>
+                } @else {
+                  <span class="text-amber-600 font-medium"> (Thấp hơn chuẩn {{ whoComparison()!.heightDiff }} cm)</span>
+                }
+              </p>
+            </div>
+
+            <!-- Weight Assessment -->
+            <div class="card p-4 border-l-4 border-orange-500">
+              <h4 class="font-bold text-sm text-gray-700 dark:text-gray-300 mb-1">⚖️ Đánh giá Cân nặng</h4>
+              <p class="text-sm">
+                Số đo mới nhất: <strong class="text-orange-600">{{ latestRecord()!.weight }} kg</strong>.
+                Chuẩn WHO cùng độ tuổi là <strong>{{ whoComparison()!.standardWeight }} kg</strong>.
+                @if (whoComparison()!.weightDiff >= 0) {
+                  <span class="text-emerald-600 font-medium"> (Nặng hơn chuẩn +{{ whoComparison()!.weightDiff }} kg)</span>
+                } @else {
+                  <span class="text-amber-600 font-medium"> (Nhẹ hơn chuẩn {{ whoComparison()!.weightDiff }} kg)</span>
+                }
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ========================================== -->
+    <!-- TAB 2: Lịch sử phát triển (Tháng / Năm)    -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'HISTORY') {
+      <div class="space-y-4">
+        <!-- Filter Toolbar -->
+        <div class="card !p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- Year filter -->
+            <div class="flex items-center gap-2">
+              <label for="filterYear" class="text-xs font-medium text-gray-500">Năm:</label>
+              <select
+                id="filterYear"
+                [ngModel]="filterYear()"
+                (ngModelChange)="filterYear.set($event)"
+                class="input !w-auto !py-1 !px-2.5 text-xs rounded-lg"
+              >
+                <option value="ALL">Tất cả các năm</option>
+                @for (y of availableYears(); track y) {
+                  <option [value]="y">{{ y }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Month filter -->
+            <div class="flex items-center gap-2">
+              <label for="filterMonth" class="text-xs font-medium text-gray-500">Tháng:</label>
+              <select
+                id="filterMonth"
+                [ngModel]="filterMonth()"
+                (ngModelChange)="filterMonth.set($event)"
+                class="input !w-auto !py-1 !px-2.5 text-xs rounded-lg"
+              >
+                <option value="ALL">Tất cả các tháng</option>
+                <option value="1">Tháng 1</option>
+                <option value="2">Tháng 2</option>
+                <option value="3">Tháng 3</option>
+                <option value="4">Tháng 4</option>
+                <option value="5">Tháng 5</option>
+                <option value="6">Tháng 6</option>
+                <option value="7">Tháng 7</option>
+                <option value="8">Tháng 8</option>
+                <option value="9">Tháng 9</option>
+                <option value="10">Tháng 10</option>
+                <option value="11">Tháng 11</option>
+                <option value="12">Tháng 12</option>
+              </select>
+            </div>
+
+            @if (filterYear() !== 'ALL' || filterMonth() !== 'ALL') {
+              <button
+                type="button"
+                (click)="filterYear.set('ALL'); filterMonth.set('ALL')"
+                class="text-xs text-primary-600 hover:underline"
+              >
+                ✕ Đặt lại
+              </button>
+            }
+          </div>
+
+          <button (click)="openAddRecordModal()" class="btn btn-primary text-xs flex items-center justify-center gap-1.5">
+            <span>➕</span>
+            <span>Ghi số đo mới</span>
+          </button>
+        </div>
+
+        <!-- History Records Table/Cards -->
+        @if (filteredRecords().length > 0) {
+          <div class="card overflow-hidden !p-0">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm border-collapse">
+                <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                  <tr>
+                    <th class="py-3.5 px-4">Ngày đo</th>
+                    <th class="py-3.5 px-4">Tuổi lúc đo</th>
+                    <th class="py-3.5 px-4">Chiều cao</th>
+                    <th class="py-3.5 px-4">Cân nặng</th>
+                    <th class="py-3.5 px-4">Vòng đầu</th>
+                    <th class="py-3.5 px-4">Thể trạng (BMI)</th>
+                    <th class="py-3.5 px-4">Ghi chú</th>
+                    <th class="py-3.5 px-4 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                  @for (record of filteredRecords(); track record.id) {
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                      <td class="py-3.5 px-4 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                        📅 {{ formatDate(record.record_date) }}
+                      </td>
+                      <td class="py-3.5 px-4 text-gray-500 text-xs whitespace-nowrap">
+                        {{ getAgeAtDate(selectedChild()!.birth_date, record.record_date) }}
+                      </td>
+                      <td class="py-3.5 px-4 font-medium text-blue-600 whitespace-nowrap">
+                        {{ record.height }} cm
+                      </td>
+                      <td class="py-3.5 px-4 font-medium text-orange-600 whitespace-nowrap">
+                        {{ record.weight }} kg
+                      </td>
+                      <td class="py-3.5 px-4 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {{ record.head_circumference ? record.head_circumference + ' cm' : '--' }}
+                      </td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        @if (getBMIDetails(record.weight, record.height); as bmi) {
+                          <span class="text-xs px-2 py-0.5 rounded-full font-medium" [ngClass]="bmi.badgeClass">
+                            {{ bmi.bmi }} - {{ bmi.label }}
+                          </span>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4 text-gray-500 text-xs max-w-xs truncate">
+                        {{ record.note || '--' }}
+                      </td>
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          (click)="openEditRecordModal(record)"
+                          class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors mr-1"
+                          title="Chỉnh sửa số đo"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          type="button"
+                          (click)="deleteRecord(record)"
+                          class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                          title="Xóa số đo"
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        } @else {
+          <div class="card text-center py-12">
+            <p class="text-gray-400 mb-3">Không tìm thấy số đo nào trong khoảng thời gian đã chọn</p>
+            <button (click)="openAddRecordModal()" class="btn btn-primary text-xs">
+              ➕ Ghi nhận số đo mới
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ========================================== -->
+    <!-- TAB 3: Các mốc phát triển (Milestones)    -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'MILESTONES') {
+      <div class="space-y-5">
+        <!-- Progress Bar Card -->
+        <div class="card !p-5 bg-gradient-to-r from-emerald-500/10 via-primary-500/10 to-blue-500/10 border border-emerald-100 dark:border-gray-700">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+            <div>
+              <h3 class="font-bold text-base">Tiến độ phát triển của bé</h3>
+              <p class="text-xs text-gray-500">Đã đạt {{ milestoneStats().achieved }} trên tổng số {{ milestoneStats().total }} mốc quan trọng</p>
+            </div>
+            <div class="text-2xl font-black text-emerald-600">
+              {{ milestoneStats().percentage }}%
+            </div>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              class="h-full bg-gradient-to-r from-emerald-500 to-primary-600 rounded-full transition-all duration-500"
+              [style.width.%]="milestoneStats().percentage"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <!-- Categories Filter -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+            <button
+              type="button"
+              (click)="filterMilestoneCategory.set('ALL')"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+              [class.bg-primary-600]="filterMilestoneCategory() === 'ALL'"
+              [class.text-white]="filterMilestoneCategory() === 'ALL'"
+              [class.bg-gray-100]="filterMilestoneCategory() !== 'ALL'"
+              [class.dark:bg-gray-700]="filterMilestoneCategory() !== 'ALL'"
+            >
+              Tất cả
+            </button>
+            @for (cat of milestoneCategories; track cat.key) {
+              <button
+                type="button"
+                (click)="filterMilestoneCategory.set(cat.key)"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1"
+                [class.bg-primary-600]="filterMilestoneCategory() === cat.key"
+                [class.text-white]="filterMilestoneCategory() === cat.key"
+                [class.bg-gray-100]="filterMilestoneCategory() !== cat.key"
+                [class.dark:bg-gray-700]="filterMilestoneCategory() !== cat.key"
+              >
+                <span>{{ cat.icon }}</span>
+                <span>{{ cat.name }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Status filter -->
+            <select
+              [ngModel]="filterMilestoneStatus()"
+              (ngModelChange)="filterMilestoneStatus.set($event)"
+              class="input !w-auto !py-1.5 !px-3 text-xs rounded-lg"
+            >
+              <option value="ALL">Tất cả trạng thái</option>
+              <option value="ACHIEVED">✅ Đã đạt được</option>
+              <option value="PENDING">⏳ Chưa đạt</option>
+            </select>
+
+            <button
+              (click)="openAddMilestoneModal()"
+              class="btn btn-primary text-xs whitespace-nowrap flex items-center gap-1"
+            >
+              <span>➕</span>
+              <span>Thêm mốc</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Milestones Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          @for (m of filteredMilestones(); track m.id) {
+            <div
+              class="card !p-4 flex items-start gap-3 transition-all border"
+              [class.border-emerald-200]="m.achieved"
+              [class.bg-emerald-50/20]="m.achieved"
+              [class.dark:border-emerald-900/40]="m.achieved"
+              [class.border-gray-200]="!m.achieved"
+              [class.dark:border-gray-700]="!m.achieved"
+            >
+              <!-- Checkbox -->
+              <button
+                type="button"
+                (click)="toggleMilestone(m)"
+                class="w-6 h-6 rounded-md border flex items-center justify-center transition-colors mt-0.5 flex-shrink-0"
+                [class.bg-emerald-600]="m.achieved"
+                [class.border-emerald-600]="m.achieved"
+                [class.text-white]="m.achieved"
+                [class.border-gray-300]="!m.achieved"
+                [class.dark:border-gray-600]="!m.achieved"
+                title="Đánh dấu đã đạt mốc"
+              >
+                @if (m.achieved) {
+                  ✓
+                }
+              </button>
+
+              <!-- Milestone Details -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h4 class="font-bold text-sm" [class.line-through]="m.achieved" [class.text-gray-500]="m.achieved">
+                    {{ m.title }}
+                  </h4>
+                  <span class="text-[10px] px-2 py-0.5 rounded font-medium flex items-center gap-1" [ngClass]="getCategoryMeta(m.category).color">
+                    {{ getCategoryMeta(m.category).icon }} {{ getCategoryMeta(m.category).name }}
+                  </span>
+                </div>
+
+                @if (m.description) {
+                  <p class="text-xs text-gray-500 mt-1">{{ m.description }}</p>
+                }
+
+                <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-700/50 text-[11px] text-gray-400">
+                  <span>📅 Dự kiến: ~{{ m.target_age_months }} tháng tuổi</span>
+
+                  @if (m.achieved && m.achieved_date) {
+                    <span class="text-emerald-600 font-medium">
+                      🎉 Đạt ngày: {{ formatDate(m.achieved_date) }}
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <!-- Delete custom milestone button -->
+              <button
+                type="button"
+                (click)="deleteMilestone(m)"
+                class="text-gray-400 hover:text-red-500 text-xs p-1"
+                title="Xóa mốc"
+              >
+                ✕
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ========================================== -->
+    <!-- TAB 4: Hồ sơ của bé (Profile & Settings)   -->
+    <!-- ========================================== -->
+    @if (activeTab() === 'PROFILE') {
+      <div class="card max-w-2xl mx-auto space-y-6">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div>
+            <h3 class="text-lg font-bold">Hồ sơ thông tin của bé</h3>
+            <p class="text-xs text-gray-500">Chỉnh sửa thông tin cá nhân và cài đặt cho bé</p>
+          </div>
+          <button (click)="openEditChildModal()" class="btn btn-secondary text-xs flex items-center gap-1.5">
+            <span>✏️</span>
+            <span>Chỉnh sửa</span>
+          </button>
+        </div>
+
+        <div class="space-y-4 text-sm">
+          <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+            <span class="text-gray-500">Họ và tên:</span>
+            <span class="font-semibold">{{ selectedChild()?.name }}</span>
+          </div>
+
+          <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+            <span class="text-gray-500">Giới tính:</span>
+            <span class="font-semibold">{{ selectedChild()?.gender === 'BOY' ? 'Bé trai 👦' : 'Bé gái 👧' }}</span>
+          </div>
+
+          <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+            <span class="text-gray-500">Ngày sinh:</span>
+            <span class="font-semibold">{{ formatDate(selectedChild()!.birth_date) }}</span>
+          </div>
+
+          <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+            <span class="text-gray-500">Tuổi hiện tại:</span>
+            <span class="font-semibold text-primary-600">{{ currentAge()?.label }}</span>
+          </div>
+
+          <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+            <span class="text-gray-500">Tổng số lần đo tăng trưởng:</span>
+            <span class="font-semibold">{{ growthRecords().length }} lần</span>
+          </div>
+
+          @if (selectedChild()?.notes) {
+            <div class="py-2 border-b border-gray-100 dark:border-gray-700">
+              <span class="text-gray-500 block mb-1">Ghi chú đặc biệt / Dị ứng:</span>
+              <p class="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/40 p-3 rounded-lg text-xs">
+                {{ selectedChild()?.notes }}
+              </p>
+            </div>
+          }
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="pt-4 border-t border-red-100 dark:border-red-900/30">
+          <h4 class="text-sm font-bold text-red-600 mb-2">Vùng nguy hiểm</h4>
+          <p class="text-xs text-gray-500 mb-4">Xóa hồ sơ bé sẽ xóa toàn bộ lịch sử tăng trưởng và mốc phát triển liên quan.</p>
+          <button (click)="deleteChild()" class="btn bg-red-600 hover:bg-red-700 text-white text-xs">
+            🗑️ Xóa hồ sơ bé này
+          </button>
+        </div>
+      </div>
+    }
+
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL: Thêm / Sửa Hồ Sơ Bé                -->
+  <!-- ========================================== -->
+  @if (showChildModal()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <h3 class="text-xl font-bold">
+          {{ isEditChild() ? 'Chỉnh sửa hồ sơ bé' : 'Thêm hồ sơ bé mới' }}
+        </h3>
+
+        <form [formGroup]="childForm" (ngSubmit)="saveChild()" class="space-y-4">
+          <div>
+            <label class="label">Họ và tên bé *</label>
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="VD: Bé Bắp, Nguyễn Minh Khôi"
+              class="input"
+            />
+          </div>
+
+          <div>
+            <label class="label">Giới tính *</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="flex items-center gap-2 p-3 border rounded-xl cursor-pointer"
+                [class.border-blue-500]="childForm.get('gender')?.value === 'BOY'"
+                [class.bg-blue-50]="childForm.get('gender')?.value === 'BOY'"
+                [class.dark:bg-blue-900/20]="childForm.get('gender')?.value === 'BOY'"
+              >
+                <input type="radio" value="BOY" formControlName="gender" class="hidden" />
+                <span class="text-xl">👦</span>
+                <span class="font-medium text-sm">Bé trai</span>
+              </label>
+
+              <label class="flex items-center gap-2 p-3 border rounded-xl cursor-pointer"
+                [class.border-pink-500]="childForm.get('gender')?.value === 'GIRL'"
+                [class.bg-pink-50]="childForm.get('gender')?.value === 'GIRL'"
+                [class.dark:bg-pink-900/20]="childForm.get('gender')?.value === 'GIRL'"
+              >
+                <input type="radio" value="GIRL" formControlName="gender" class="hidden" />
+                <span class="text-xl">👧</span>
+                <span class="font-medium text-sm">Bé gái</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="label">Ngày sinh *</label>
+            <input
+              type="date"
+              formControlName="birth_date"
+              class="input"
+            />
+          </div>
+
+          <div>
+            <label class="label">Ghi chú (nhóm máu, tiền sử dị ứng...)</label>
+            <textarea
+              formControlName="notes"
+              rows="2"
+              placeholder="Thêm ghi chú đặc biệt..."
+              class="input"
+            ></textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3">
+            <button type="button" (click)="closeChildModal()" class="btn btn-secondary">
+              Hủy
+            </button>
+            <button type="submit" [disabled]="childForm.invalid" class="btn btn-primary">
+              Lưu thông tin
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL: Ghi nhận / Chỉnh sửa số đo          -->
+  <!-- ========================================== -->
+  @if (showRecordModal()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <h3 class="text-xl font-bold">
+          {{ editingRecordId() ? 'Chỉnh sửa số đo' : 'Ghi nhận số đo mới' }}
+        </h3>
+
+        <form [formGroup]="recordForm" (ngSubmit)="saveRecord()" class="space-y-4">
+          <div>
+            <label class="label">Ngày đo *</label>
+            <input
+              type="date"
+              formControlName="record_date"
+              class="input"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Chiều cao (cm) *</label>
+              <input
+                type="number"
+                step="0.1"
+                formControlName="height"
+                placeholder="VD: 75.5"
+                class="input"
+              />
+            </div>
+
+            <div>
+              <label class="label">Cân nặng (kg) *</label>
+              <input
+                type="number"
+                step="0.1"
+                formControlName="weight"
+                placeholder="VD: 9.8"
+                class="input"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="label">Vòng đầu (cm - tùy chọn)</label>
+            <input
+              type="number"
+              step="0.1"
+              formControlName="head_circumference"
+              placeholder="VD: 44.5"
+              class="input"
+            />
+          </div>
+
+          <div>
+            <label class="label">Ghi chú (khám định kỳ, sau ốm, mọc răng...)</label>
+            <textarea
+              formControlName="note"
+              rows="2"
+              placeholder="Ghi chú thêm về sức khỏe..."
+              class="input"
+            ></textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3">
+            <button type="button" (click)="closeRecordModal()" class="btn btn-secondary">
+              Hủy
+            </button>
+            <button type="submit" [disabled]="recordForm.invalid" class="btn btn-primary">
+              Lưu số đo
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL: Thêm mốc phát triển mới             -->
+  <!-- ========================================== -->
+  @if (showMilestoneModal()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <h3 class="text-xl font-bold">Thêm mốc phát triển mới</h3>
+
+        <form [formGroup]="milestoneForm" (ngSubmit)="saveCustomMilestone()" class="space-y-4">
+          <div>
+            <label class="label">Tên mốc phát triển *</label>
+            <input
+              type="text"
+              formControlName="title"
+              placeholder="VD: Biết gọi tên mẹ, Tự xúc cơm ăn..."
+              class="input"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Nhóm kỹ năng *</label>
+              <select formControlName="category" class="input">
+                @for (cat of milestoneCategories; track cat.key) {
+                  <option [value]="cat.key">{{ cat.icon }} {{ cat.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="label">Độ tuổi dự kiến (tháng) *</label>
+              <input
+                type="number"
+                formControlName="target_age_months"
+                placeholder="VD: 12"
+                class="input"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="label">Mô tả chi tiết</label>
+            <textarea
+              formControlName="description"
+              rows="2"
+              placeholder="Mô tả cụ thể biểu hiện của bé..."
+              class="input"
+            ></textarea>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="mAchieved"
+              formControlName="achieved"
+              class="w-4 h-4 rounded text-primary-600 focus:ring-primary-500"
+            />
+            <label for="mAchieved" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+              Bé đã đạt được mốc này
+            </label>
+          </div>
+
+          @if (milestoneForm.get('achieved')?.value) {
+            <div>
+              <label class="label">Ngày đạt được</label>
+              <input
+                type="date"
+                formControlName="achieved_date"
+                class="input"
+              />
+            </div>
+          }
+
+          <div class="flex justify-end gap-3 pt-3">
+            <button type="button" (click)="closeMilestoneModal()" class="btn btn-secondary">
+              Hủy
+            </button>
+            <button type="submit" [disabled]="milestoneForm.invalid" class="btn btn-primary">
+              Thêm mốc
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+</div>

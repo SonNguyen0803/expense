@@ -92,3 +92,53 @@ export interface CategoryExpense {
   total: number;
   percentage: number;
 }
+
+// ========================
+// Child Management Models
+// ========================
+
+export type ChildGender = 'BOY' | 'GIRL';
+
+export interface Child {
+  id: string;
+  family_id: string;
+  name: string;
+  gender: ChildGender;
+  birth_date: string; // YYYY-MM-DD
+  avatar_url?: string | null;
+  notes?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GrowthRecord {
+  id: string;
+  child_id: string;
+  family_id: string;
+  record_date: string; // YYYY-MM-DD
+  height: number; // cm
+  weight: number; // kg
+  head_circumference?: number | null; // cm
+  note?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type MilestoneCategory = 'MOTOR' | 'LANGUAGE' | 'COGNITIVE' | 'SOCIAL' | 'OTHER';
+
+export interface ChildMilestone {
+  id: string;
+  child_id: string;
+  family_id: string;
+  category: MilestoneCategory;
+  title: string;
+  description?: string | null;
+  target_age_months?: number | null;
+  achieved: boolean;
+  achieved_date?: string | null;
+  note?: string | null;
+  created_at: string;
+  updated_at: string;
+}
