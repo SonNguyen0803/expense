@@ -93,6 +93,21 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'shopping-list',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/shopping-list/shopping-list.component').then(m => m.ShoppingListComponent)
+  },
+  {
+    path: 'shopping',
+    redirectTo: 'shopping-list',
+    pathMatch: 'full'
+  },
+  {
+    path: 'to-buy',
+    redirectTo: 'shopping-list',
+    pathMatch: 'full'
+  },
+  {
     path: 'family',
     canActivate: [authGuard],
     loadComponent: () => import('./features/family/family-settings/family-settings.component').then(m => m.FamilySettingsComponent)

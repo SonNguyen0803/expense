@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS public.home_assets (
     assigned_to TEXT,
     image_url TEXT,
     notes TEXT,
+    maintenances_count INT DEFAULT 0,
+    total_maintenance_cost NUMERIC DEFAULT 0,
     created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -60,75 +62,43 @@ ALTER TABLE public.home_assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.asset_maintenances ENABLE ROW LEVEL SECURITY;
 
 -- Policies for home_assets
-CREATE POLICY "Users can view family home assets"
+CREATE POLICY "home_assets_select"
     ON public.home_assets FOR SELECT
-    USING (
-        family_id IN (
-            SELECT family_id FROM public.family_members
-            WHERE user_id = auth.uid()
-        )
-    );
+    TO authenticated
+    USING (is_family_member(family_id));
 
-CREATE POLICY "Users can create family home assets"
+CREATE POLICY "home_assets_insert"
     ON public.home_assets FOR INSERT
-    WITH CHECK (
-        family_id IN (
-            SELECT family_id FROM public.family_members
-            WHERE user_id = auth.uid()
-        )
-    );
+    TO authenticated
+    WITH CHECK (((family_id IS NOT NULL) AND is_family_member(family_id)));
 
-CREATE POLICY "Users can update family home assets"
+CREATE POLICY "home_assets_update"
     ON public.home_assets FOR UPDATE
-    USING (
-        family_id IN (
-            SELECT family_id FROM public.family_members
-            WHERE user_id = auth.uid()
-        )
-    );
+    TO authenticated
+    USING (((family_id IS NOT NULL) AND is_family_member(family_id)));
 
-CREATE POLICY "Users can delete family home assets"
+CREATE POLICY "home_assets_delete"
     ON public.home_assets FOR DELETE
-    USING (
-        family_id IN (
-            SELECT family_id FROM public.family_members
-            WHERE user_id = auth.uid()
-        )
-    );
+    TO authenticated
+    USING (((family_id IS NOT NULL) AND is_family_admin(family_id)));
 
 -- Policies for asset_maintenances
-CREATE POLICY "Users can view asset maintenances"
+CREATE POLICY "asset_maintenances_select"
     ON public.asset_maintenances FOR SELECT
-    USING (
-        family_id IN (
-            SELECT family_id FROM public.family_members
-            WHERE user_id = auth.uid()
-        )
-    );
+    TO authenticated
+    USING (is_family_member(family_id));
 
-CREATE POLICY "Users can create asset maintenances"
+CREATE POLICY "asset_maintenances_insert"
     ON public.asset_maintenances FOR INSERT
-    WITH CHECK (
-        family_id IN (
-            SELECT family_id FROM public.family_members
-            WHERE user_id = auth.uid()
-        )
-    );
+    TO authenticated
+    WITH CHECK (((family_id IS NOT NULL) AND is_family_member(family_id)));
 
-CREATE POLICY "Users can update asset maintenances"
+CREATE POLICY "asset_maintenances_update"
     ON public.asset_maintenances FOR UPDATE
-    USING (
-        family_id IN (
-            SELECT family_id FROM public.family_members
-            WHERE user_id = auth.uid()
-        )
-    );
+    TO authenticated
+    USING (((family_id IS NOT NULL) AND is_family_member(family_id)));
 
-CREATE POLICY "Users can delete asset maintenances"
+CREATE POLICY "asset_maintenances_delete"
     ON public.asset_maintenances FOR DELETE
-    USING (
-        family_id IN (
-            SELECT family_id FROM public.family_members
-            WHERE user_id = auth.uid()
-        )
-    );
+    TO authenticated
+    USING (((family_id IS NOT NULL) AND is_family_admin(family_id)));

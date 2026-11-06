@@ -365,4 +365,55 @@ export interface AssetStatsSummary {
   brokenCount: number;
 }
 
+// ===================================
+// Shopping List / Items to Buy Models
+// ===================================
+
+export type ShoppingItemStatus = 'PENDING' | 'BUYING' | 'PURCHASED' | 'CANCELLED';
+
+export type ShoppingCategory =
+  | 'GROCERY'
+  | 'HOME_SUPPLIES'
+  | 'BABY_KIDS'
+  | 'ELECTRONICS'
+  | 'CLOTHING'
+  | 'PERSONAL_CARE'
+  | 'OTHER';
+
+export type ShoppingPriority = 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW';
+
+export interface ShoppingItem {
+  id: string;
+  family_id: string;
+  title: string;
+  category: ShoppingCategory;
+  quantity: number;
+  unit: string;
+  estimated_price?: number;
+  actual_price?: number | null;
+  priority: ShoppingPriority;
+  status: ShoppingItemStatus;
+  store_location?: string | null;
+  target_date?: string | null; // YYYY-MM-DD
+  assigned_to?: string | null;
+  notes?: string | null;
+  purchased_at?: string | null;
+  purchased_by?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ShoppingSummary {
+  totalItems: number;
+  pendingCount: number;
+  buyingCount: number;
+  purchasedCount: number;
+  cancelledCount: number;
+  totalEstimated: number;
+  totalActualSpent: number;
+  urgentCount: number;
+}
+
+
 

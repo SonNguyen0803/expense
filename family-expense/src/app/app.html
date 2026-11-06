@@ -37,6 +37,11 @@
           <span>🛋️</span>
           <span>Tài sản trong nhà</span>
         </a>
+        <a routerLink="/shopping-list" routerLinkActive="bg-primary-50 dark:bg-primary-900/20 text-primary-600"
+          class="nav-link">
+          <span>🛒</span>
+          <span>Đồ cần mua</span>
+        </a>
         <a routerLink="/family" routerLinkActive="bg-primary-50 dark:bg-primary-900/20 text-primary-600"
           class="nav-link">
           <span>👨‍👩‍👧‍👦</span>
@@ -113,6 +118,11 @@
           routerLinkActive="bg-primary-100 dark:bg-primary-900/40 text-primary-600" class="nav-link">
           <span>🛋️</span>
           <span>Tài sản trong nhà</span>
+        </a>
+        <a routerLink="/shopping-list" (click)="closeMenu()"
+          routerLinkActive="bg-primary-100 dark:bg-primary-900/40 text-primary-600" class="nav-link">
+          <span>🛒</span>
+          <span>Đồ cần mua</span>
         </a>
         <a routerLink="/family" (click)="closeMenu()"
           routerLinkActive="bg-primary-100 dark:bg-primary-900/40 text-primary-600" class="nav-link">

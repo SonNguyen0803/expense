@@ -1,0 +1,662 @@
+<div class="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+
+  <!-- Header Section -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+        <span>🛒</span> Danh sách sản phẩm cần mua
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
+        Ghi chú đồ dùng, thực phẩm cần sắm cho gia đình, theo dõi tiến độ và thay đổi trạng thái khi đi chợ.
+      </p>
+    </div>
+
+    <!-- Actions bar -->
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Toggle Shopping Mode button -->
+      <button (click)="toggleShoppingMode()"
+        [class.bg-emerald-600]="shoppingMode()"
+        [class.text-white]="shoppingMode()"
+        [class.hover:bg-emerald-700]="shoppingMode()"
+        [class.bg-gray-100]="!shoppingMode()"
+        [class.dark:bg-gray-800]="!shoppingMode()"
+        [class.text-gray-700]="!shoppingMode()"
+        [class.dark:text-gray-200]="!shoppingMode()"
+        class="px-3.5 py-2 rounded-lg font-semibold text-sm flex items-center gap-1.5 transition-colors border border-gray-200 dark:border-gray-700 shadow-sm">
+        <span>🛍️</span>
+        <span>{{ shoppingMode() ? 'Đang bật Chế độ đi chợ' : 'Bật Chế độ đi chợ' }}</span>
+      </button>
+
+      @if (summary().purchasedCount > 0) {
+      <button (click)="confirmClearPurchased()"
+        class="px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors border border-gray-200 dark:border-gray-700 flex items-center gap-1.5">
+        <span>🧹</span> Dọn món đã mua
+      </button>
+      }
+
+      <button (click)="openAddItemModal()"
+        class="btn btn-primary text-sm flex items-center gap-1.5 shadow-sm">
+        <span>➕</span> Thêm chi tiết
+      </button>
+    </div>
+  </div>
+
+  @if (!currentFamily()) {
+  <div class="card text-center py-12">
+    <div class="text-5xl mb-4">🏠</div>
+    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Chưa chọn gia đình</h3>
+    <p class="text-gray-600 dark:text-gray-400 mb-6">Vui lòng chọn hoặc tạo gia đình để quản lý danh sách cần mua.</p>
+    <a routerLink="/family" class="btn btn-primary inline-flex items-center gap-2">
+      <span>👨‍👩‍👧‍👦</span> Đi tới mục Gia đình
+    </a>
+  </div>
+  } @else {
+
+  <!-- Quick Add Input Bar -->
+  <div class="card p-4 shadow-sm border border-primary-200 dark:border-primary-900/50 bg-gradient-to-r from-primary-50/50 to-white dark:from-gray-800 dark:to-gray-800">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <!-- Category selector for quick add -->
+      <select [value]="quickCategory()" (change)="quickCategory.set($any($event.target).value)"
+        class="input text-sm py-2 px-3 sm:w-48 bg-white dark:bg-gray-700 border-gray-300">
+        @for (cat of categories; track cat.key) {
+        <option [value]="cat.key">{{ cat.icon }} {{ cat.label }}</option>
+        }
+      </select>
+
+      <!-- Input text with Enter event -->
+      <div class="flex-1 relative">
+        <input type="text"
+          [value]="quickTitle()"
+          (input)="quickTitle.set($any($event.target).value)"
+          (keydown.enter)="onQuickAdd()"
+          placeholder="Nhập tên món cần mua (ví dụ: Sữa tươi 1L, Nước mắm, Rau cải, Bỉm tã...) rồi ấn Enter"
+          class="input py-2 text-sm pl-4 pr-10 bg-white dark:bg-gray-700 border-gray-300">
+        @if (quickTitle()) {
+        <button (click)="quickTitle.set('')" class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 text-sm">✕</button>
+        }
+      </div>
+
+      <!-- Quick Add Submit Button -->
+      <button (click)="onQuickAdd()" [disabled]="!quickTitle().trim()"
+        class="btn btn-primary text-sm whitespace-nowrap px-5 flex items-center justify-center gap-1.5 shadow-sm">
+        <span>➕</span> Thêm ngay
+      </button>
+    </div>
+  </div>
+
+  <!-- Shopping Progress Bar -->
+  @if (summary().totalItems > 0) {
+  <div class="card p-4">
+    <div class="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1.5">
+      <span class="flex items-center gap-1.5">
+        <span>🛒 Tiến độ mua sắm:</span>
+        <b class="text-primary-600 dark:text-primary-400">{{ summary().purchasedCount }} / {{ summary().totalItems }} món đã mua</b>
+      </span>
+      <span class="text-primary-600 dark:text-primary-400 font-bold">{{ progressPercent() }}%</span>
+    </div>
+    <div class="w-full bg-gray-100 dark:bg-gray-700 h-2.5 rounded-full overflow-hidden">
+      <div class="bg-gradient-to-r from-primary-500 to-emerald-500 h-full rounded-full transition-all duration-300"
+        [style.width.%]="progressPercent()"></div>
+    </div>
+  </div>
+  }
+
+  <!-- Stat Summary KPI Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+    <!-- Card 1: Pending (Cần mua) -->
+    <div class="card p-4 border-l-4 border-amber-500 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] uppercase font-bold tracking-wider text-gray-500 dark:text-gray-400">Cần mua</p>
+        <h3 class="text-xl md:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
+          {{ summary().pendingCount }} <span class="text-xs font-normal text-gray-500">món</span>
+        </h3>
+        <p class="text-[11px] text-gray-500 mt-0.5">Dự kiến: {{ formatVND(summary().totalEstimated) }}</p>
+      </div>
+      <div class="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-lg flex items-center justify-center text-xl">
+        🛒
+      </div>
+    </div>
+
+    <!-- Card 2: Buying (Đang chọn mua / Trong giỏ) -->
+    <div class="card p-4 border-l-4 border-blue-500 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] uppercase font-bold tracking-wider text-gray-500 dark:text-gray-400">Đang chọn mua</p>
+        <h3 class="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">
+          {{ summary().buyingCount }} <span class="text-xs font-normal text-gray-500">món</span>
+        </h3>
+        <p class="text-[11px] text-gray-500 mt-0.5">Đã cho vào giỏ hàng</p>
+      </div>
+      <div class="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+        🔄
+      </div>
+    </div>
+
+    <!-- Card 3: Purchased (Đã mua) -->
+    <div class="card p-4 border-l-4 border-emerald-500 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] uppercase font-bold tracking-wider text-gray-500 dark:text-gray-400">Đã mua xong</p>
+        <h3 class="text-xl md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+          {{ summary().purchasedCount }} <span class="text-xs font-normal text-gray-500">món</span>
+        </h3>
+        <p class="text-[11px] text-gray-500 mt-0.5">Đã chi: {{ formatVND(summary().totalActualSpent) }}</p>
+      </div>
+      <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-lg flex items-center justify-center text-xl">
+        ✅
+      </div>
+    </div>
+
+    <!-- Card 4: Urgent (Cần gấp) -->
+    <div class="card p-4 border-l-4 border-red-500 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] uppercase font-bold tracking-wider text-gray-500 dark:text-gray-400">Cần mua gấp</p>
+        <h3 class="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
+          {{ summary().urgentCount }} <span class="text-xs font-normal text-gray-500">món</span>
+        </h3>
+        <p class="text-[11px] text-red-500 mt-0.5">Ưu tiên hàng đầu</p>
+      </div>
+      <div class="w-10 h-10 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg flex items-center justify-center text-xl">
+        🔴
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Tabs Filter (Only when NOT in shopping mode) -->
+  @if (!shoppingMode()) {
+  <div class="border-b border-gray-200 dark:border-gray-700">
+    <nav class="flex space-x-2 md:space-x-4 overflow-x-auto py-1" aria-label="Status Filters">
+      <button (click)="statusFilter.set('ALL')"
+        [class.text-primary-600]="statusFilter() === 'ALL'"
+        [class.border-primary-600]="statusFilter() === 'ALL'"
+        [class.border-b-2]="statusFilter() === 'ALL'"
+        [class.font-bold]="statusFilter() === 'ALL'"
+        class="whitespace-nowrap py-2.5 px-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-1.5 transition-colors">
+        <span>📑 Tất cả</span>
+        <span class="px-2 py-0.2 rounded-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">{{ summary().totalItems }}</span>
+      </button>
+
+      <button (click)="statusFilter.set('PENDING')"
+        [class.text-amber-600]="statusFilter() === 'PENDING'"
+        [class.border-amber-600]="statusFilter() === 'PENDING'"
+        [class.border-b-2]="statusFilter() === 'PENDING'"
+        [class.font-bold]="statusFilter() === 'PENDING'"
+        class="whitespace-nowrap py-2.5 px-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-1.5 transition-colors">
+        <span>🛒 Cần mua</span>
+        <span class="px-2 py-0.2 rounded-full text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-bold">{{ summary().pendingCount }}</span>
+      </button>
+
+      <button (click)="statusFilter.set('BUYING')"
+        [class.text-blue-600]="statusFilter() === 'BUYING'"
+        [class.border-blue-600]="statusFilter() === 'BUYING'"
+        [class.border-b-2]="statusFilter() === 'BUYING'"
+        [class.font-bold]="statusFilter() === 'BUYING'"
+        class="whitespace-nowrap py-2.5 px-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-1.5 transition-colors">
+        <span>🔄 Đang chọn mua</span>
+        <span class="px-2 py-0.2 rounded-full text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 font-bold">{{ summary().buyingCount }}</span>
+      </button>
+
+      <button (click)="statusFilter.set('PURCHASED')"
+        [class.text-green-600]="statusFilter() === 'PURCHASED'"
+        [class.border-green-600]="statusFilter() === 'PURCHASED'"
+        [class.border-b-2]="statusFilter() === 'PURCHASED'"
+        [class.font-bold]="statusFilter() === 'PURCHASED'"
+        class="whitespace-nowrap py-2.5 px-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-1.5 transition-colors">
+        <span>✅ Đã mua</span>
+        <span class="px-2 py-0.2 rounded-full text-xs bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 font-bold">{{ summary().purchasedCount }}</span>
+      </button>
+
+      <button (click)="statusFilter.set('CANCELLED')"
+        [class.text-gray-600]="statusFilter() === 'CANCELLED'"
+        [class.border-gray-600]="statusFilter() === 'CANCELLED'"
+        [class.border-b-2]="statusFilter() === 'CANCELLED'"
+        [class.font-bold]="statusFilter() === 'CANCELLED'"
+        class="whitespace-nowrap py-2.5 px-3 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1.5 transition-colors">
+        <span>❌ Đã hủy</span>
+        <span class="px-2 py-0.2 rounded-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{{ summary().cancelledCount }}</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Detailed Filters bar -->
+  <div class="card p-3.5 space-y-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Search input -->
+      <div class="relative">
+        <input type="text"
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          placeholder="Tìm theo tên món, nơi mua, ghi chú..."
+          class="input pl-9 text-xs py-2">
+        <span class="absolute left-3 top-2 text-gray-400 text-xs">🔍</span>
+        @if (searchQuery()) {
+        <button (click)="searchQuery.set('')" class="absolute right-3 top-2 text-gray-400 hover:text-gray-600 text-xs">✕</button>
+        }
+      </div>
+
+      <!-- Filter Category -->
+      <div>
+        <select [value]="categoryFilter()" (change)="categoryFilter.set($any($event.target).value)" class="input text-xs py-2">
+          <option value="ALL">Tất cả danh mục</option>
+          @for (c of categories; track c.key) {
+          <option [value]="c.key">{{ c.icon }} {{ c.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Filter Priority -->
+      <div>
+        <select [value]="priorityFilter()" (change)="priorityFilter.set($any($event.target).value)" class="input text-xs py-2">
+          <option value="ALL">Tất cả mức độ ưu tiên</option>
+          @for (p of priorities; track p.key) {
+          <option [value]="p.key">{{ p.icon }} {{ p.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Filter Store -->
+      <div>
+        <select [value]="storeFilter()" (change)="storeFilter.set($any($event.target).value)" class="input text-xs py-2">
+          <option value="ALL">Tất cả địa điểm mua</option>
+          @for (s of popularStores; track s) {
+          <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+  } @else {
+  <!-- Shopping Mode Banner -->
+  <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
+    <div class="flex items-center gap-2">
+      <span class="text-xl">🛍️</span>
+      <div>
+        <b class="text-sm block">Đang ở Chế độ đi chợ</b>
+        <span>Giao diện tối ưu hóa cho màn hình di động: tick nhanh vào ô vuông để đánh dấu món đã mua.</span>
+      </div>
+    </div>
+    <button (click)="toggleShoppingMode()" class="px-3 py-1 bg-white dark:bg-gray-800 border border-emerald-400 text-emerald-700 dark:text-emerald-300 rounded font-semibold hover:bg-emerald-50">
+      Thoát
+    </button>
+  </div>
+  }
+
+  <!-- Items List -->
+  @if (filteredItems().length === 0) {
+  <div class="card text-center py-12">
+    <div class="text-4xl mb-3">🛒</div>
+    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200">Không có sản phẩm nào</h3>
+    <p class="text-sm text-gray-500 mt-1">Hãy nhập nhanh vào thanh ở trên hoặc bấm "+ Thêm chi tiết".</p>
+    <button (click)="openAddItemModal()" class="btn btn-primary mt-4 text-sm inline-flex items-center gap-1">
+      <span>➕</span> Thêm món cần mua
+    </button>
+  </div>
+  } @else {
+
+  <div class="space-y-3">
+    @for (item of filteredItems(); track item.id) {
+    <div class="card p-4 transition-all duration-200 border border-gray-100 dark:border-gray-700/60 hover:shadow-sm"
+      [class.opacity-60]="item.status === 'PURCHASED' || item.status === 'CANCELLED'"
+      [class.bg-gray-50]="item.status === 'PURCHASED'"
+      [class.dark:bg-gray-800/60]="item.status === 'PURCHASED'"
+      [class.border-l-4]="true"
+      [class.border-l-red-500]="item.priority === 'URGENT' && item.status !== 'PURCHASED'"
+      [class.border-l-orange-500]="item.priority === 'HIGH' && item.status !== 'PURCHASED'"
+      [class.border-l-emerald-500]="item.status === 'PURCHASED'"
+      [class.border-l-blue-500]="item.status === 'BUYING'">
+
+      <div class="flex items-start gap-3">
+        <!-- Big Checkbox Toggle Button for Fast Status Change -->
+        <button (click)="togglePurchased(item)"
+          title="{{ item.status === 'PURCHASED' ? 'Bấm để hủy đánh dấu đã mua' : 'Bấm để đánh dấu đã mua xong' }}"
+          class="mt-1 flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors cursor-pointer"
+          [class.bg-emerald-600]="item.status === 'PURCHASED'"
+          [class.border-emerald-600]="item.status === 'PURCHASED'"
+          [class.text-white]="item.status === 'PURCHASED'"
+          [class.border-gray-300]="item.status !== 'PURCHASED'"
+          [class.dark:border-gray-600]="item.status !== 'PURCHASED'"
+          [class.hover:border-emerald-500]="item.status !== 'PURCHASED'">
+          @if (item.status === 'PURCHASED') {
+          <span class="text-xs font-bold">✓</span>
+          }
+        </button>
+
+        <!-- Main Item Details -->
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <!-- Category Badge -->
+            <span class="text-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1 {{ getCategoryMeta(item.category).badgeClass }}">
+              <span>{{ getCategoryMeta(item.category).icon }}</span>
+              <span>{{ getCategoryMeta(item.category).label }}</span>
+            </span>
+
+            <!-- Priority Badge -->
+            <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold {{ getPriorityMeta(item.priority).badgeClass }}">
+              {{ getPriorityMeta(item.priority).icon }} {{ getPriorityMeta(item.priority).label }}
+            </span>
+
+            <!-- Quantity & Unit Badge -->
+            <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold">
+              {{ item.quantity }} {{ item.unit }}
+            </span>
+
+            <!-- Store Location -->
+            @if (item.store_location) {
+            <span class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100/80 dark:bg-gray-700/60 px-2 py-0.5 rounded">
+              🏪 {{ item.store_location }}
+            </span>
+            }
+
+            <!-- Target Date -->
+            @if (item.target_date) {
+            <span class="text-xs text-gray-500">
+              📅 {{ formatDate(item.target_date) }}
+            </span>
+            }
+
+            <!-- Assigned member -->
+            @if (item.assigned_to) {
+            <span class="text-xs text-primary-600 dark:text-primary-400 font-medium">
+              👤 {{ item.assigned_to }}
+            </span>
+            }
+          </div>
+
+          <!-- Title -->
+          <h3 class="text-base font-bold text-gray-900 dark:text-white"
+            [class.line-through]="item.status === 'PURCHASED'">
+            {{ item.title }}
+          </h3>
+
+          <!-- Notes -->
+          @if (item.notes) {
+          <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 italic">
+            📝 {{ item.notes }}
+          </p>
+          }
+
+          <!-- Financial Price info -->
+          <div class="flex flex-wrap items-center gap-3 mt-2 text-xs">
+            @if (item.estimated_price) {
+            <span class="text-gray-500">
+              Giá dự kiến: <b class="text-gray-800 dark:text-gray-200">{{ formatVND(item.estimated_price) }}</b>
+            </span>
+            }
+
+            @if (item.status === 'PURCHASED' && item.actual_price) {
+            <span class="text-emerald-600 dark:text-emerald-400 font-semibold">
+              Đã mua thực tế: <b>{{ formatVND(item.actual_price) }}</b>
+            </span>
+            }
+          </div>
+        </div>
+
+        <!-- Right Side: Status Dropdown / Action Buttons -->
+        <div class="flex flex-col items-end gap-2 flex-shrink-0">
+          <!-- Interactive Status Selector (Cực kỳ trực quan & dễ thay đổi trạng thái) -->
+          <div class="flex items-center gap-1">
+            <select [value]="item.status" (change)="setStatus(item, $any($event.target).value)"
+              class="text-xs font-semibold px-2 py-1 rounded-lg border focus:ring-1 transition-colors cursor-pointer"
+              [class.bg-amber-50]="item.status === 'PENDING'"
+              [class.text-amber-800]="item.status === 'PENDING'"
+              [class.border-amber-300]="item.status === 'PENDING'"
+              [class.bg-blue-50]="item.status === 'BUYING'"
+              [class.text-blue-800]="item.status === 'BUYING'"
+              [class.border-blue-300]="item.status === 'BUYING'"
+              [class.bg-emerald-50]="item.status === 'PURCHASED'"
+              [class.text-emerald-800]="item.status === 'PURCHASED'"
+              [class.border-emerald-300]="item.status === 'PURCHASED'"
+              [class.bg-gray-100]="item.status === 'CANCELLED'"
+              [class.text-gray-700]="item.status === 'CANCELLED'">
+              @for (st of statuses; track st.key) {
+              <option [value]="st.key">{{ st.icon }} {{ st.label }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Quick Action Buttons: Sửa, Xóa -->
+          <div class="flex items-center gap-1 text-xs">
+            <button (click)="openEditItemModal(item)" title="Chỉnh sửa chi tiết"
+              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 rounded transition-colors">
+              ✏️
+            </button>
+            <button (click)="confirmDelete(item)" title="Xóa món này"
+              class="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded transition-colors">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+  }
+
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: ADD / EDIT SHOPPING ITEM          -->
+  <!-- ========================================== -->
+  @if (showItemModal()) {
+  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-xl w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <span>{{ isEditItem() ? '✏️ Chỉnh sửa sản phẩm cần mua' : '➕ Thêm sản phẩm cần mua' }}</span>
+        </h3>
+        <button (click)="closeItemModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl">✕</button>
+      </div>
+
+      <form [formGroup]="itemForm" (ngSubmit)="saveItem()" class="space-y-4 mt-4">
+        <!-- Title -->
+        <div>
+          <label class="label">Tên sản phẩm / Món cần mua <span class="text-red-500">*</span></label>
+          <input type="text" formControlName="title" placeholder="VD: Sữa chua Probi, Dầu ăn Simply 2L..." class="input">
+          @if (itemForm.get('title')?.touched && itemForm.get('title')?.invalid) {
+          <p class="text-xs text-red-500 mt-1">Vui lòng nhập tên sản phẩm (ít nhất 2 ký tự)</p>
+          }
+        </div>
+
+        <!-- Category & Priority -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="label">Danh mục <span class="text-red-500">*</span></label>
+            <select formControlName="category" class="input">
+              @for (c of categories; track c.key) {
+              <option [value]="c.key">{{ c.icon }} {{ c.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="label">Mức độ ưu tiên <span class="text-red-500">*</span></label>
+            <select formControlName="priority" class="input">
+              @for (p of priorities; track p.key) {
+              <option [value]="p.key">{{ p.icon }} {{ p.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Quantity & Unit -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="label">Số lượng <span class="text-red-500">*</span></label>
+            <input type="number" formControlName="quantity" min="0.1" step="0.5" class="input">
+          </div>
+
+          <div>
+            <label class="label">Đơn vị tính <span class="text-red-500">*</span></label>
+            <div class="flex gap-2">
+              <input type="text" formControlName="unit" placeholder="hộp, kg, chai..." class="input flex-1">
+              <select (change)="itemForm.patchValue({ unit: $any($event.target).value })" class="input w-auto text-xs">
+                <option value="">Gợi ý</option>
+                @for (u of commonUnits; track u) {
+                <option [value]="u">{{ u }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price & Store -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="label">Giá dự kiến (₫)</label>
+            <input type="number" formControlName="estimated_price" min="0" step="1000" class="input">
+          </div>
+
+          <div>
+            <label class="label">Nơi mua / Siêu thị</label>
+            <div class="flex gap-2">
+              <input type="text" formControlName="store_location" placeholder="WinMart, Chợ, Shopee..." class="input flex-1">
+              <select (change)="itemForm.patchValue({ store_location: $any($event.target).value })" class="input w-auto text-xs">
+                <option value="">Gợi ý</option>
+                @for (s of popularStores; track s) {
+                <option [value]="s">{{ s }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status & Target Date -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="label">Trạng thái hiện tại <span class="text-red-500">*</span></label>
+            <select formControlName="status" class="input">
+              @for (st of statuses; track st.key) {
+              <option [value]="st.key">{{ st.icon }} {{ st.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="label">Hạn chót / Ngày cần mua</label>
+            <input type="date" formControlName="target_date" class="input">
+          </div>
+        </div>
+
+        <!-- Assigned Member -->
+        <div>
+          <label class="label">Người phụ trách mua</label>
+          <input type="text" formControlName="assigned_to" placeholder="Bố, Mẹ..." class="input">
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="label">Ghi chú thêm</label>
+          <textarea formControlName="notes" rows="2" placeholder="Ghi chú màu sắc, thương hiệu ưa thích, khuyến mãi..." class="input"></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <button type="button" (click)="closeItemModal()" class="btn btn-secondary">
+            Hủy
+          </button>
+          <button type="submit" [disabled]="itemForm.invalid" class="btn btn-primary flex items-center gap-1.5">
+            <span>💾</span> {{ isEditItem() ? 'Lưu thay đổi' : 'Thêm vào danh sách' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL 2: CONFIRM PURCHASE & RECORD PRICE   -->
+  <!-- ========================================== -->
+  @if (showPurchaseModal() && purchasingItem()) {
+  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-xl">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
+        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <span>✅ Đánh dấu đã mua thành công</span>
+        </h3>
+        <button (click)="closePurchaseModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl">✕</button>
+      </div>
+
+      <div class="my-4 space-y-3">
+        <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-xs text-emerald-800 dark:text-emerald-300">
+          <div class="font-bold text-sm">{{ purchasingItem()!.title }}</div>
+          <div class="mt-1">Số lượng: <b>{{ purchasingItem()!.quantity }} {{ purchasingItem()!.unit }}</b></div>
+        </div>
+
+        <form [formGroup]="purchaseForm" (ngSubmit)="confirmPurchase()" class="space-y-3">
+          <div>
+            <label class="label text-xs">Giá tiền thực tế đã mua (₫):</label>
+            <input type="number" formControlName="actual_price" min="0" step="1000" class="input">
+          </div>
+
+          <div class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/40 rounded-lg text-xs">
+            <input type="checkbox" id="createTxCheck" formControlName="create_transaction" class="w-4 h-4 text-primary-600 rounded">
+            <label for="createTxCheck" class="text-gray-700 dark:text-gray-300 font-medium cursor-pointer">
+              Tự động ghi nhận vào mục Giao dịch chi tiêu gia đình
+            </label>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+            <button type="button" (click)="closePurchaseModal()" class="btn btn-secondary text-xs">
+              Hủy
+            </button>
+            <button type="submit" class="btn btn-primary text-xs flex items-center gap-1">
+              <span>✅</span> Xác nhận đã mua
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL 3: CONFIRM DELETE ITEM               -->
+  <!-- ========================================== -->
+  @if (showDeleteConfirm() && deleteTarget()) {
+  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-6 shadow-xl text-center">
+      <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto text-2xl mb-3">
+        🗑️
+      </div>
+      <h3 class="text-base font-bold text-gray-900 dark:text-white">Xác nhận xóa?</h3>
+      <p class="text-xs text-gray-500 mt-2">
+        Bạn có chắc muốn xóa món <span class="font-bold text-gray-800 dark:text-gray-200">"{{ deleteTarget()!.title }}"</span> khỏi danh sách không?
+      </p>
+
+      <div class="flex items-center justify-center gap-3 mt-5">
+        <button (click)="closeDeleteConfirm()" class="btn btn-secondary text-xs">
+          Hủy bỏ
+        </button>
+        <button (click)="executeDelete()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold">
+          Xóa
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODAL 4: CONFIRM CLEAR PURCHASED           -->
+  <!-- ========================================== -->
+  @if (showClearConfirm()) {
+  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-6 shadow-xl text-center">
+      <div class="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-2xl mb-3">
+        🧹
+      </div>
+      <h3 class="text-base font-bold text-gray-900 dark:text-white">Dọn dẹp danh sách?</h3>
+      <p class="text-xs text-gray-500 mt-2">
+        Hành động này sẽ xóa tất cả {{ summary().purchasedCount }} món đã hoàn thành mua khỏi danh sách để làm gọn màn hình.
+      </p>
+
+      <div class="flex items-center justify-center gap-3 mt-5">
+        <button (click)="closeClearConfirm()" class="btn btn-secondary text-xs">
+          Hủy bỏ
+        </button>
+        <button (click)="executeClearPurchased()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold">
+          Dọn dẹp ngay
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+</div>
