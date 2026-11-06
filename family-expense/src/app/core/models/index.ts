@@ -270,3 +270,99 @@ export interface ChildPointSummary {
   badgesCount: number;
 }
 
+// ===================================
+// Home Asset Management Models
+// ===================================
+
+export type AssetCategory =
+  | 'ELECTRONICS'
+  | 'APPLIANCES'
+  | 'FURNITURE'
+  | 'VEHICLES'
+  | 'KITCHEN'
+  | 'VALUABLES'
+  | 'OTHER';
+
+export type RoomLocation =
+  | 'LIVING_ROOM'
+  | 'KITCHEN'
+  | 'BEDROOM_MASTER'
+  | 'BEDROOM_KIDS'
+  | 'WORK_ROOM'
+  | 'BALCONY'
+  | 'GARAGE'
+  | 'STORAGE'
+  | 'OTHER';
+
+export type AssetStatus =
+  | 'ACTIVE'
+  | 'NEEDS_MAINTENANCE'
+  | 'UNDER_REPAIR'
+  | 'BROKEN'
+  | 'DISPOSED';
+
+export interface HomeAsset {
+  id: string;
+  family_id: string;
+  name: string;
+  category: AssetCategory;
+  room_location: RoomLocation;
+  purchase_date?: string | null; // YYYY-MM-DD
+  purchase_price?: number;
+  current_value?: number;
+  status: AssetStatus;
+  brand?: string | null;
+  model?: string | null;
+  serial_number?: string | null;
+  vendor?: string | null;
+  warranty_months?: number;
+  warranty_end_date?: string | null; // YYYY-MM-DD
+  maintenance_period_months?: number; // e.g. 6 (every 6 months)
+  next_maintenance_date?: string | null; // YYYY-MM-DD
+  assigned_to?: string | null;
+  image_url?: string | null;
+  notes?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Computed/joined fields
+  maintenances_count?: number;
+  total_maintenance_cost?: number;
+}
+
+export type MaintenanceType = 'PERIODIC' | 'REPAIR' | 'REPLACEMENT' | 'INSPECTION';
+
+export interface AssetMaintenance {
+  id: string;
+  asset_id: string;
+  family_id: string;
+  title: string;
+  type: MaintenanceType;
+  maintenance_date: string; // YYYY-MM-DD
+  cost: number;
+  service_provider?: string | null;
+  technician_contact?: string | null;
+  notes?: string | null;
+  next_maintenance_date?: string | null; // YYYY-MM-DD
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Joined details
+  asset_name?: string;
+  asset_category?: AssetCategory;
+}
+
+export interface AssetStatsSummary {
+  totalAssets: number;
+  totalPurchaseCost: number;
+  totalCurrentValue: number;
+  totalMaintenanceCost: number;
+  expiringWarrantyCount: number;
+  activeCount: number;
+  needsMaintenanceCount: number;
+  brokenCount: number;
+}
+
+

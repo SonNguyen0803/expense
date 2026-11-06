@@ -83,6 +83,16 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'assets',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/home-assets/home-assets.component').then(m => m.HomeAssetsComponent)
+  },
+  {
+    path: 'home-assets',
+    redirectTo: 'assets',
+    pathMatch: 'full'
+  },
+  {
     path: 'family',
     canActivate: [authGuard],
     loadComponent: () => import('./features/family/family-settings/family-settings.component').then(m => m.FamilySettingsComponent)

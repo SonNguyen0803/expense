@@ -1,7 +1,6 @@
 import { Component, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { FamilyRepository } from '../../core/services/family.repository';
@@ -21,7 +20,7 @@ type ChartMetric = 'COMBINED' | 'HEIGHT' | 'WEIGHT';
 @Component({
   selector: 'app-child-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, NgxEchartsDirective],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgxEchartsDirective],
   templateUrl: './child-management.component.html'
 })
 export class ChildManagementComponent implements OnInit {
